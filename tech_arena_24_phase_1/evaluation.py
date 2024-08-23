@@ -175,8 +175,8 @@ def get_time_step_demand(demand, ts):
 
 
 def get_time_step_fleet(solution, ts):
-    # GET THE SOLUTION AT A SPECIFIC TIME-STEP t
-    if ts in solution['time_step']:
+    # GET THE SOLUTION AT A SPECIFIC TIME-STEP 
+    if ts in solution['time_step'].values:
         s = solution[solution['time_step'] == ts]
         s = s.drop_duplicates('server_id', inplace=False)
         s = s.set_index('server_id', drop=False, inplace=False)
@@ -355,14 +355,17 @@ def get_evaluation(solution,
     FLEET = pd.DataFrame()
     # if ts-related fleet is empty then current fleet is ts-fleet
     for ts in range(1, time_steps+1):
+
         # GET THE ACTUAL DEMAND AT TIMESTEP ts
         D = get_time_step_demand(demand, ts)
 
         # GET THE SERVERS DEPLOYED AT TIMESTEP ts
         ts_fleet = get_time_step_fleet(solution, ts)
 
-        if ts_fleet.empty:
+        if ts_fleet.empty and not FLEET.empty:
             ts_fleet = FLEET
+        elif ts_fleet.empty and FLEET.empty:
+            continue
 
         # UPDATE FLEET
         FLEET = update_fleet(ts, FLEET, ts_fleet)
@@ -381,9 +384,9 @@ def get_evaluation(solution,
             L = get_normalized_lifespan(FLEET)
     
             P = get_profit(D, 
-                           Zf, 
-                           selling_prices,
-                           FLEET)
+                            Zf, 
+                            selling_prices,
+                            FLEET)
             o = U * L * P
             OBJECTIVE += o
             
