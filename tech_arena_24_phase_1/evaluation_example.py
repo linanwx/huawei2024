@@ -1,5 +1,4 @@
-
-
+import time
 from utils import (load_problem_data,
                    load_solution)
 from evaluation import evaluation_function
@@ -11,6 +10,9 @@ solution = load_solution('./data/solution_example.json')
 # LOAD PROBLEM DATA
 demand, datacenters, servers, selling_prices = load_problem_data()
 
+# START TIMER
+start_time = time.time()
+
 # EVALUATE THE SOLUTION
 score = evaluation_function(solution,
                             demand,
@@ -19,4 +21,11 @@ score = evaluation_function(solution,
                             selling_prices,
                             seed=123)
 
+# END TIMER
+end_time = time.time()
+
+# CALCULATE ELAPSED TIME
+elapsed_time = end_time - start_time
+
 print(f'Solution score: {score}')
+print(f'Elapsed time: {elapsed_time} seconds')
