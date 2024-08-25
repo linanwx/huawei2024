@@ -8,7 +8,7 @@ import random
 from copy import deepcopy
 import logging
 
-def get_my_solution(d):
+def get_my_solution(demand_data):
     # 配置日志
     logging.basicConfig(level=logging.INFO)
 
@@ -23,12 +23,15 @@ def get_my_solution(d):
             self.cooling_rate = cooling_rate
             self.num_iterations = num_iterations
             self.history = []
-            self.data = self.initialize_data()
+            self.data = self.initialize_data(demand_data)
 
-        def initialize_data(self):
+        def initialize_data(self, demand_data):
+            # 读服务器数据
+            servers = pd.read_csv('./data/servers.csv')
+
             return {
-                'servers': [],
-                'datacenters': {'dc1': 0.25, 'dc2': 0.35, 'dc3': 0.65, 'dc4': 0.75},
+                'servers': servers.to_dict('records'),  # 将服务器数据转化为字典列表
+                'datacenters': {'dc1': 25245, 'dc2': 15300, 'dc3': 7020, 'dc4': 8280},  # 容量
                 'operations': []
             }
 
@@ -133,8 +136,8 @@ def get_my_solution(d):
 
     # 初始化参数
     initial_state = {
-        'servers': [],
-        'datacenters': {'dc1': 100, 'dc2': 150},
+        'servers': [],  # 初始没有服务器
+        'datacenters': {'dc1': 25245, 'dc2': 15300, 'dc3': 7020, 'dc4': 8280},  # 数据中心容量
         'operations': []
     }
     initial_temperature = 1000
@@ -148,15 +151,15 @@ def get_my_solution(d):
     logging.info(f"最佳状态: {best_state}")
     logging.info(f"最佳能量: {best_energy}")
 
-    # 返回一个解决方案列表
+    # 保存优化结果
     return [best_state]
 
 # 读取种子并进行求解
 seeds = known_seeds('training')
-demand = pd.read_csv('./data/demand.csv')
+demand = pd.read_csv('./data/demand.csv')  # 从CSV文件中读取需求数据
 
 for seed in seeds:
     np.random.seed(seed)
-    actual_demand = get_actual_demand(demand)
-    solution = get_my_solution(actual_demand)
-    save_solution(solution, f'./output/{seed}.json')
+    actual_demand = get_actual_demand(demand)  # 根据需求文件中的内容计算实际需求
+    solution = get_my_solution(actual_demand)  # 将需求数据传入优化算法
+    save_solution(solution, f'./output/{seed}.json')  # 保存优化后的解决方案
