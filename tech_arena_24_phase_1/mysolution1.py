@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from seeds import known_seeds
-from utils import save_solution  
+from utils import save_solution  # 加载 utils 文件中的 save_solution
 from evaluation import get_actual_demand
 import math
 import random
@@ -28,17 +28,17 @@ def get_my_solution(d):
         def initialize_data(self):
             return {
                 'servers': [],
-                'datacenters': {'dc1': 0.25, 'dc2': 0.35, 'dc3': 0.65, 'dc4': 0.75},  
+                'datacenters': {'dc1': 0.25, 'dc2': 0.35, 'dc3': 0.65, 'dc4': 0.75},
                 'operations': []
             }
 
         def _generate_new_state(self):
-            step_id = random.choice(['purchase', 'undo', 'move'])
+            step_id = random.choice(['buy', 'dismiss', 'move'])
             logging.info(f"Attempting {step_id} operation.")
 
             operation_map = {
-                'purchase': self._execute_purchase,
-                'undo': self._execute_undo,
+                'buy': self._execute_buy,
+                'dismiss': self._execute_dismiss,
                 'move': self._execute_move
             }
 
@@ -49,17 +49,17 @@ def get_my_solution(d):
                 return 1.0
             return math.exp(-delta_energy / self.temperature)
 
-        def _execute_purchase(self):
-            if self._check_purchase_constraints():
-                new_state = self._apply_purchase()
-                self.history.append(('purchase', deepcopy(self.data)))
+        def _execute_buy(self):
+            if self._check_buy_constraints():
+                new_state = self._apply_buy()
+                self.history.append(('buy', deepcopy(self.data)))
                 return new_state
             return self.current_state
 
-        def _execute_undo(self):
-            if self._check_undo_constraints():
-                new_state = self._apply_undo()
-                self.history.append(('undo', deepcopy(self.data)))
+        def _execute_dismiss(self):
+            if self._check_dismiss_constraints():
+                new_state = self._apply_dismiss()
+                self.history.append(('dismiss', deepcopy(self.data)))
                 return new_state
             return self.current_state
 
@@ -70,21 +70,21 @@ def get_my_solution(d):
                 return new_state
             return self.current_state
 
-        def _check_purchase_constraints(self):
+        def _check_buy_constraints(self):
             return bool(self.data['servers'])
 
-        def _check_undo_constraints(self):
+        def _check_dismiss_constraints(self):
             return bool(self.history)
 
         def _check_move_constraints(self):
             return True
 
-        def _apply_purchase(self):
+        def _apply_buy(self):
             new_server = {'id': len(self.data['servers']) + 1, 'capacity': random.randint(1, 10)}
             self.data['servers'].append(new_server)
             return deepcopy(self.data)
 
-        def _apply_undo(self):
+        def _apply_dismiss(self):
             if self.history:
                 last_action, last_data = self.history.pop()
                 self.data = last_data
@@ -148,7 +148,7 @@ def get_my_solution(d):
     logging.info(f"最佳状态: {best_state}")
     logging.info(f"最佳能量: {best_energy}")
 
-    # 返回列表
+    # 返回一个解决方案列表
     return [best_state]
 
 # 读取种子并进行求解
