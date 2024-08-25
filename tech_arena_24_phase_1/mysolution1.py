@@ -28,12 +28,21 @@ def get_my_solution(demand_data):
         def initialize_data(self, demand_data):
             # 读服务器数据
             servers = pd.read_csv('./data/servers.csv')
+            # 提取 server_generation, server_type, release_time 列
+            server_generation = servers['server_generation'].tolist()
+            server_type = servers['server_type'].tolist()
+            release_time = servers['release_time'].tolist()
+            # 将数据存储到字典中
+        data = {
+            'server_generation': server_generation,
+            'server_type': server_type,
+            'release_time': release_time,
+            'servers': servers.to_dict('records'),  # 将完整的服务器数据转化为字典列表
+            'datacenters': {'dc1': 25245, 'dc2': 15300, 'dc3': 7020, 'dc4': 8280},  # 容量
+            'operations': []
+        }
 
-            return {
-                'servers': servers.to_dict('records'),  # 将服务器数据转化为字典列表
-                'datacenters': {'dc1': 25245, 'dc2': 15300, 'dc3': 7020, 'dc4': 8280},  # 容量
-                'operations': []
-            }
+        return data
 
         def _generate_new_state(self):
             step_id = random.choice(['buy', 'dismiss', 'move'])
