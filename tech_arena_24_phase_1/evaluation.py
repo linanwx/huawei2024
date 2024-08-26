@@ -272,10 +272,35 @@ def get_revenue(D, Z, selling_prices):
     return r
 
 
+# 原始版本
+# def get_cost(fleet):
+#     # CALCULATE THE SERVER COST - PART 1
+#     fleet['cost'] = fleet.apply(calculate_server_cost, axis=1)
+#     return fleet['cost'].sum()
+
+# 性能优化版本
 def get_cost(fleet):
-    # CALCULATE THE SERVER COST - PART 1
-    fleet['cost'] = fleet.apply(calculate_server_cost, axis=1)
-    return fleet['cost'].sum()
+    # 预计算能源成本
+    energy_cost = fleet['energy_consumption'] * fleet['cost_of_energy']
+    
+    # 计算维护成本
+    x = fleet['lifespan']
+    xhat = fleet['life_expectancy']
+    b = fleet['average_maintenance_fee']
+    ratio = (1.5 * x) / xhat
+    maintenance_cost = b * (1 + ratio * np.log2(ratio))
+    
+    # 计算总成本
+    cost = energy_cost + maintenance_cost
+    
+    # 添加购买价格（仅对寿命为1年的服务器）
+    cost += np.where(x == 1, fleet['purchase_price'], 0)
+    
+    # 添加移动成本
+    cost += np.where(fleet['moved'] == 1, fleet['cost_of_moving'], 0)
+    
+    return cost.sum()
+
 
 
 def calculate_server_cost(row):
