@@ -5,7 +5,8 @@ from evaluation import evaluation_function
 
 
 # LOAD SOLUTION
-solution = load_solution('./data/solution_example.json')
+# solution = load_solution('./data/solution_example.json')
+solution = load_solution('./output/123_557076679.9208556.json')
 
 # LOAD PROBLEM DATA
 demand, datacenters, servers, selling_prices = load_problem_data()
@@ -19,7 +20,7 @@ score = evaluation_function(solution,
                             datacenters,
                             servers,
                             selling_prices,
-                            seed=123)
+                            seed=123, verbose = 1)
 
 # END TIMER
 end_time = time.time()
