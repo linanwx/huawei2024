@@ -203,7 +203,7 @@ class DiffSolution:
                 # fleet_info.purchase_cost = buy_actions['purchase_price'].sum()
 
                 # 提前计算服务器的到期时间，方便后面删除过期服务器
-                life_expectancies = buy_actions['life_expectancy'] + ts - 1
+                life_expectancies = buy_actions['life_expectancy'] + ts
                 for server_id, expire_ts in zip(buy_actions['server_id'], life_expectancies):
                     if expire_ts in fleet_info.expiration_map:
                         fleet_info.expiration_map[expire_ts].append(server_id)

@@ -364,7 +364,7 @@ def update_check_lifespan(fleet):
     # LIFE EXPECTANCY
     fleet['lifespan'] = fleet['lifespan'].fillna(0)
     fleet['lifespan'] += 1
-    fleet = fleet.drop(fleet.index[fleet['lifespan'] >= fleet['life_expectancy']], inplace=False)
+    fleet = fleet.drop(fleet.index[fleet['lifespan'] > fleet['life_expectancy']], inplace=False)
     return fleet
 
 
