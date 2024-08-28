@@ -5,8 +5,8 @@ from evaluation import evaluation_function
 
 
 # LOAD SOLUTION
-# solution = load_solution('./data/solution_example.json')
-solution = load_solution('./output/123_557076679.9208556.json')
+# solution = load_solution('./data/solution_example_repeat_org.json')
+solution = load_solution('./output/123_407295596.17477804.json')
 
 # LOAD PROBLEM DATA
 demand, datacenters, servers, selling_prices = load_problem_data()

@@ -1,0 +1,442 @@
+[
+    {
+        "time_step": 127,
+        "datacenter_id": "DC2",
+        "server_generation": "CPU.S3",
+        "server_id": 4,
+        "action": "buy",
+        "quantity": 1580.0
+    },
+    {
+        "time_step": 49,
+        "datacenter_id": "DC3",
+        "server_generation": "CPU.S1",
+        "server_id": 5,
+        "action": "buy",
+        "quantity": 1752.0
+    },
+    {
+        "time_step": 53,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S1",
+        "server_id": 7,
+        "action": "buy",
+        "quantity": 1006.0
+    },
+    {
+        "time_step": 127,
+        "datacenter_id": "DC3",
+        "server_generation": "CPU.S4",
+        "server_id": 8,
+        "action": "buy",
+        "quantity": 327.0
+    },
+    {
+        "time_step": 96,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S3",
+        "server_id": 9,
+        "action": "buy",
+        "quantity": 1155.0
+    },
+    {
+        "time_step": 109,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": 11,
+        "action": "buy",
+        "quantity": 673.0
+    },
+    {
+        "time_step": 14,
+        "datacenter_id": "DC2",
+        "server_generation": "CPU.S1",
+        "server_id": 13,
+        "action": "buy",
+        "quantity": 2867.0
+    },
+    {
+        "time_step": 137,
+        "datacenter_id": "DC3",
+        "server_generation": "GPU.S3",
+        "server_id": 15,
+        "action": "buy",
+        "quantity": 288.0
+    },
+    {
+        "time_step": 44,
+        "datacenter_id": "DC2",
+        "server_generation": "GPU.S1",
+        "server_id": 17,
+        "action": "buy",
+        "quantity": 461.0
+    },
+    {
+        "time_step": 135,
+        "datacenter_id": "DC4",
+        "server_generation": "GPU.S3",
+        "server_id": 19,
+        "action": "buy",
+        "quantity": 157.0
+    },
+    {
+        "time_step": 145,
+        "datacenter_id": "DC3",
+        "server_generation": "GPU.S3",
+        "server_id": 21,
+        "action": "buy",
+        "quantity": 175.0
+    },
+    {
+        "time_step": 52,
+        "datacenter_id": "DC3",
+        "server_generation": "CPU.S2",
+        "server_id": 24,
+        "action": "buy",
+        "quantity": 244.0
+    },
+    {
+        "time_step": 151,
+        "datacenter_id": "DC3",
+        "server_generation": "GPU.S3",
+        "server_id": 27,
+        "action": "buy",
+        "quantity": 22.0
+    },
+    {
+        "time_step": 125,
+        "datacenter_id": "DC3",
+        "server_generation": "GPU.S3",
+        "server_id": 34,
+        "action": "buy",
+        "quantity": 55.0
+    },
+    {
+        "time_step": 54,
+        "datacenter_id": "DC3",
+        "server_generation": "GPU.S2",
+        "server_id": 35,
+        "action": "buy",
+        "quantity": 21.0
+    },
+    {
+        "time_step": 149,
+        "datacenter_id": "DC3",
+        "server_generation": "CPU.S4",
+        "server_id": 38,
+        "action": "buy",
+        "quantity": 336.0
+    },
+    {
+        "time_step": 22,
+        "datacenter_id": "DC3",
+        "server_generation": "GPU.S1",
+        "server_id": 39,
+        "action": "buy",
+        "quantity": 203.0
+    },
+    {
+        "time_step": 4,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S1",
+        "server_id": 40,
+        "action": "buy",
+        "quantity": 4979.0
+    },
+    {
+        "time_step": 76,
+        "datacenter_id": "DC2",
+        "server_generation": "CPU.S3",
+        "server_id": 41,
+        "action": "buy",
+        "quantity": 987.0
+    },
+    {
+        "time_step": 38,
+        "datacenter_id": "DC3",
+        "server_generation": "CPU.S2",
+        "server_id": 46,
+        "action": "buy",
+        "quantity": 325.0
+    },
+    {
+        "time_step": 44,
+        "datacenter_id": "DC3",
+        "server_generation": "GPU.S1",
+        "server_id": 49,
+        "action": "buy",
+        "quantity": 107.0
+    },
+    {
+        "time_step": 95,
+        "datacenter_id": "DC2",
+        "server_generation": "GPU.S2",
+        "server_id": 52,
+        "action": "buy",
+        "quantity": 66.0
+    },
+    {
+        "time_step": 74,
+        "datacenter_id": "DC4",
+        "server_generation": "GPU.S2",
+        "server_id": 53,
+        "action": "buy",
+        "quantity": 44.0
+    },
+    {
+        "time_step": 46,
+        "datacenter_id": "DC2",
+        "server_generation": "CPU.S2",
+        "server_id": 55,
+        "action": "buy",
+        "quantity": 1139.0
+    },
+    {
+        "time_step": 146,
+        "datacenter_id": "DC1",
+        "server_generation": "GPU.S3",
+        "server_id": 58,
+        "action": "buy",
+        "quantity": 88.0
+    },
+    {
+        "time_step": 147,
+        "datacenter_id": "DC3",
+        "server_generation": "CPU.S4",
+        "server_id": 61,
+        "action": "buy",
+        "quantity": 250.0
+    },
+    {
+        "time_step": 151,
+        "datacenter_id": "DC2",
+        "server_generation": "GPU.S3",
+        "server_id": 64,
+        "action": "buy",
+        "quantity": 751.0
+    },
+    {
+        "time_step": 133,
+        "datacenter_id": "DC3",
+        "server_generation": "CPU.S4",
+        "server_id": 66,
+        "action": "buy",
+        "quantity": 30.0
+    },
+    {
+        "time_step": 137,
+        "datacenter_id": "DC2",
+        "server_generation": "CPU.S4",
+        "server_id": 67,
+        "action": "buy",
+        "quantity": 153.0
+    },
+    {
+        "time_step": 143,
+        "datacenter_id": "DC3",
+        "server_generation": "CPU.S4",
+        "server_id": 68,
+        "action": "buy",
+        "quantity": 30.0
+    },
+    {
+        "time_step": 56,
+        "datacenter_id": "DC3",
+        "server_generation": "GPU.S2",
+        "server_id": 69,
+        "action": "buy",
+        "quantity": 9.0
+    },
+    {
+        "time_step": 40,
+        "datacenter_id": "DC4",
+        "server_generation": "GPU.S1",
+        "server_id": 75,
+        "action": "buy",
+        "quantity": 63.0
+    },
+    {
+        "time_step": 64,
+        "datacenter_id": "DC3",
+        "server_generation": "GPU.S2",
+        "server_id": 77,
+        "action": "buy",
+        "quantity": 2.0
+    },
+    {
+        "time_step": 72,
+        "datacenter_id": "DC2",
+        "server_generation": "GPU.S2",
+        "server_id": 78,
+        "action": "buy",
+        "quantity": 135.0
+    },
+    {
+        "time_step": 4,
+        "datacenter_id": "DC4",
+        "server_generation": "GPU.S1",
+        "server_id": 86,
+        "action": "buy",
+        "quantity": 286.0
+    },
+    {
+        "time_step": 4,
+        "datacenter_id": "DC4",
+        "server_generation": "GPU.S1",
+        "server_id": 88,
+        "action": "buy",
+        "quantity": 190.0
+    },
+    {
+        "time_step": 130,
+        "datacenter_id": "DC2",
+        "server_generation": "CPU.S4",
+        "server_id": 96,
+        "action": "buy",
+        "quantity": 421.0
+    },
+    {
+        "time_step": 133,
+        "datacenter_id": "DC3",
+        "server_generation": "GPU.S3",
+        "server_id": 97,
+        "action": "buy",
+        "quantity": 3.0
+    },
+    {
+        "time_step": 112,
+        "datacenter_id": "DC4",
+        "server_generation": "GPU.S3",
+        "server_id": 101,
+        "action": "buy",
+        "quantity": 162.0
+    },
+    {
+        "time_step": 16,
+        "datacenter_id": "DC3",
+        "server_generation": "CPU.S1",
+        "server_id": 103,
+        "action": "buy",
+        "quantity": 201.0
+    },
+    {
+        "time_step": 87,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S3",
+        "server_id": 106,
+        "action": "buy",
+        "quantity": 95.0
+    },
+    {
+        "time_step": 105,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S3",
+        "server_id": 116,
+        "action": "buy",
+        "quantity": 3064.0
+    },
+    {
+        "time_step": 67,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S2",
+        "server_id": 120,
+        "action": "buy",
+        "quantity": 1630.0
+    },
+    {
+        "time_step": 132,
+        "datacenter_id": "DC2",
+        "server_generation": "GPU.S3",
+        "server_id": 128,
+        "action": "buy",
+        "quantity": 318.0
+    },
+    {
+        "time_step": 68,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S2",
+        "server_id": 134,
+        "action": "buy",
+        "quantity": 2398.0
+    },
+    {
+        "time_step": 18,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S1",
+        "server_id": 139,
+        "action": "buy",
+        "quantity": 249.0
+    },
+    {
+        "time_step": 143,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": 143,
+        "action": "buy",
+        "quantity": 146.0
+    },
+    {
+        "time_step": 18,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S1",
+        "server_id": 149,
+        "action": "buy",
+        "quantity": 258.0
+    },
+    {
+        "time_step": 142,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": 154,
+        "action": "buy",
+        "quantity": 81.0
+    },
+    {
+        "time_step": 20,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S1",
+        "server_id": 158,
+        "action": "buy",
+        "quantity": 74.0
+    },
+    {
+        "time_step": 9,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S1",
+        "server_id": 160,
+        "action": "buy",
+        "quantity": 1208.0
+    },
+    {
+        "time_step": 130,
+        "datacenter_id": "DC4",
+        "server_generation": "GPU.S3",
+        "server_id": 161,
+        "action": "buy",
+        "quantity": 79.0
+    },
+    {
+        "time_step": 112,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S4",
+        "server_id": 168,
+        "action": "buy",
+        "quantity": 1969.0
+    },
+    {
+        "time_step": 6,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S1",
+        "server_id": 174,
+        "action": "buy",
+        "quantity": 806.0
+    },
+    {
+        "time_step": 16,
+        "datacenter_id": "DC1",
+        "server_generation": "GPU.S1",
+        "server_id": 193,
+        "action": "buy",
+        "quantity": 261.0
+    }
+]

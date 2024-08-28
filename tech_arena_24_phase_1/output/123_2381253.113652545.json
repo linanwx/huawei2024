@@ -1,0 +1,3180 @@
+[
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_1",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_2",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_3",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_4",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_5",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_6",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_7",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_8",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_9",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_10",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_11",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_12",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_13",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_14",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_15",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_16",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_17",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_18",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_19",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_20",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_21",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_22",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_23",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_24",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_25",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_26",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_27",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_28",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_29",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_30",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_31",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_32",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_33",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_34",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_35",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_36",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_37",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_38",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_39",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_40",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_41",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_42",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_43",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_44",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_45",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_46",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_47",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_48",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_49",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_50",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_51",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_52",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_53",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_54",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_55",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_56",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_57",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_58",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_59",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_60",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_61",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_62",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_63",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_64",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_65",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_66",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_67",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_68",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_69",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_70",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_71",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_72",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_73",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_74",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_75",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_76",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_77",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_78",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_79",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_80",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_81",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_82",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_83",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_84",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_85",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_86",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_87",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_88",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_89",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_90",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_91",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_92",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_93",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_94",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_95",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_96",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_97",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_98",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_99",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_100",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_101",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_102",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_103",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_104",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_105",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_106",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_107",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_108",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_109",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_110",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_111",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_112",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_113",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_114",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_115",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_116",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_117",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_118",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_119",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_120",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_121",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_122",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_123",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_124",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_125",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_126",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_127",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_128",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_129",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_130",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_131",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_132",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_133",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_134",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_135",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_136",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_137",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_138",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_139",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_140",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_141",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_142",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_143",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_144",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_145",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_146",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_147",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_148",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_149",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_150",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_151",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_152",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_153",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_154",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_155",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_156",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_157",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_158",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_159",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_160",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_161",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_162",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_163",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_164",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_165",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_166",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_167",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_168",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_169",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_170",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_171",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_172",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_173",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_174",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_175",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_176",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_177",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_178",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_179",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_180",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_181",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_182",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_183",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_184",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_185",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_186",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_187",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_188",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_189",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_190",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_191",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_192",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_193",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_194",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_195",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_196",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_197",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_198",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_199",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_200",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_201",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_202",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_203",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_204",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_205",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_206",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_207",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_208",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_209",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_210",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_211",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_212",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_213",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_214",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_215",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_216",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_217",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_218",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_219",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_220",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_221",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_222",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_223",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_224",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_225",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_226",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_227",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_228",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_229",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_230",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_231",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_232",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_233",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_234",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_235",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_236",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_237",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_238",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_239",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_240",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_241",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_242",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_243",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_244",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_245",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_246",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_247",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_248",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_249",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_250",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_251",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_252",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_253",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_254",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_255",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_256",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_257",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_258",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_259",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_260",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_261",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_262",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_263",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_264",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_265",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_266",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_267",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_268",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_269",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_270",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_271",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_272",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_273",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_274",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_275",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_276",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_277",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_278",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_279",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_280",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_281",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_282",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_283",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_284",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_285",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_286",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_287",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_288",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_289",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_290",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_291",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_292",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_293",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_294",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_295",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_296",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_297",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_298",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_299",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_300",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_301",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_302",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_303",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_304",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_305",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_306",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_307",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_308",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_309",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_310",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_311",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_312",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_313",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_314",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_315",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_316",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_317",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_318",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_319",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_320",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_321",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_322",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_323",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_324",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_325",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_326",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_327",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_328",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_329",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_330",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_331",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_332",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_333",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_334",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_335",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_336",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_337",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_338",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_339",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_340",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_341",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_342",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_343",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_344",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_345",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_346",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_347",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_348",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_349",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_350",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_351",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_352",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_353",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_354",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_355",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_356",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_357",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_358",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_359",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_360",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_361",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_362",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_363",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_364",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_365",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_366",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_367",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_368",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_369",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_370",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_371",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_372",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_373",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_374",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_375",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_376",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_377",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_378",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_379",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_380",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_381",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_382",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_383",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_384",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_385",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_386",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_387",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_388",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_389",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_390",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_391",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_392",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_393",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_394",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_395",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_396",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_397",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_398",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_399",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_400",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_401",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_402",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_403",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_404",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_405",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_406",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_407",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_408",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_409",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_410",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_411",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_412",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_413",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_414",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_415",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_416",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_417",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_418",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_419",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_420",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_421",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_422",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_423",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_424",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_425",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_426",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_427",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_428",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_429",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_430",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_431",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_432",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_433",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_434",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_435",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_436",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_437",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_438",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_439",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_440",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_441",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_442",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_443",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_444",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_445",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_446",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_447",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_448",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_449",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_450",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_451",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_452",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_453",
+        "action": "buy"
+    },
+    {
+        "time_step": 153,
+        "datacenter_id": "DC4",
+        "server_generation": "CPU.S4",
+        "server_id": "2_454",
+        "action": "buy"
+    }
+]

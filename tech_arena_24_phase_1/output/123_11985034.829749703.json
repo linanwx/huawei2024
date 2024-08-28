@@ -1,0 +1,18 @@
+[
+    {
+        "time_step": 143,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S4",
+        "server_id": 2,
+        "action": "buy",
+        "quantity": 2427
+    },
+    {
+        "time_step": 58,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S1",
+        "server_id": 3,
+        "action": "buy",
+        "quantity": 167
+    }
+]

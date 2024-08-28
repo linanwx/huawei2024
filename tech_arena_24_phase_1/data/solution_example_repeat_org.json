@@ -1,0 +1,30 @@
+[
+    {
+        "time_step": 1,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S1",
+        "server_id": "7ee8a1de-b4b8-4fce-9bd6-19fdf8c1e409",
+        "action": "buy"
+    },
+    {
+        "time_step": 1,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S1",
+        "server_id": "ed7946d9-6b09-4d58-85b7-be5c25437c1d",
+        "action": "buy"
+    },
+    {
+        "time_step": 2,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S1",
+        "server_id": "0c2dd066-2628-4935-b540-3ab27a45e824",
+        "action": "buy"
+    },
+    {
+        "time_step": 2,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S1",
+        "server_id": "fa4e5408-db94-4a08-92ca-7a81cda8b4c2",
+        "action": "buy"
+    }
+]
