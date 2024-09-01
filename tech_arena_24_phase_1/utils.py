@@ -16,7 +16,7 @@ def save_json(path, data):
 
 def load_solution(path):
     # Loads a solution from a json file to a pandas DataFrame.
-    solution = pd.read_json(path, dtype={'server_id': str})
+    solution = pd.read_json(path)
     return solution
 
 def save_solution(solution, path):

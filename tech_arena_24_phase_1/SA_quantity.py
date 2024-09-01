@@ -131,7 +131,7 @@ class SimulatedAnnealing:
                 if random.random() < accept_prob:
                     self.current_solution = new_solution
                     current_score = new_score
-                    print(f'Iteration {i}, \033[93mAccepted\033[0m new solution with score: {current_score}')
+                    print(f'Iteration {i}, \033[93mAccepted\033[0m new solution with score: {current_score:.5e}')
 
                     # 执行延迟的更新操作
                     for update in self.pending_updates:
@@ -141,9 +141,9 @@ class SimulatedAnnealing:
                     if new_score > best_score:
                         self.best_solution = copy.deepcopy(new_solution)
                         best_score = new_score
-                        print(f'\033[92mNew best solution found with score: {best_score}\033[0m')
+                        print(f'\033[92mNew best solution found with score: {best_score:.5e}\033[0m')
                 else:
-                    print(f'Iteration {i}, \033[91mRejected\033[0m new solution with score: {new_score}')
+                    print(f'Iteration {i}, \033[91mRejected\033[0m new solution with score: {new_score:.5e}')
 
                 self.current_temp *= self.alpha
                 if self.current_temp < self.min_temp:
@@ -161,7 +161,7 @@ class SimulatedAnnealing:
 
 # 主程序
 if __name__ == '__main__':
-    seed = 123
+    seed = 6053
     # 加载数据
     servers = pd.read_csv('./data/servers.csv')
     datacenters = pd.read_csv('./data/datacenters.csv')
@@ -172,7 +172,7 @@ if __name__ == '__main__':
     # 初始化模拟退火算法
     initial_solution = pd.DataFrame(columns=['time_step', 'datacenter_id', 'server_generation', 'server_id', 'action', 'quantity'])
     S = DiffSolution(seed=seed)
-    sa = SimulatedAnnealing(initial_solution, initial_temp=10000, min_temp=1, alpha=0.99, max_iter=50)
+    sa = SimulatedAnnealing(initial_solution, initial_temp=10000, min_temp=1, alpha=0.99, max_iter=100)
 
     # 运行算法
     best_solution, best_score = sa.run(S, servers, datacenters)
@@ -183,12 +183,12 @@ if __name__ == '__main__':
         for i in range(row['quantity']):
             # 创建新行，移除 quantity 属性并调整 server_id
             new_row = row.drop('quantity').copy()
-            new_row['server_id'] = f"{row['server_id']}_{i + 1}"
+            new_row['server_id'] = f"{row['server_id']}:{i + 1}"
             expanded_rows.append(new_row)
 
     # 构建最终的DataFrame
     expanded_df = pd.DataFrame(expanded_rows)
 
-    save_solution(expanded_df, f'./output/{seed}_{best_score}.json')
-    save_solution(best_solution, f'./output/quantity_{seed}_{best_score}.json')
+    save_solution(expanded_df, f'./output/{seed}_{best_score:.5e}.json')
+    save_solution(best_solution, f'./output/quantity_{seed}_{best_score:.5e}.json')
     print(f'Final best solution: {best_solution}')
