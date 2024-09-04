@@ -84,7 +84,7 @@ def get_normalized_lifespan(fleet):
 
 def adjust_capacity_by_failure_rate(x):
     # HELPER FUNCTION TO CALCULATE THE FAILURE RATE f
-    return int(x * 1 - truncweibull_min.rvs(0.3, 0.05, 0.1, size=1).item())
+    return int(x * (1 - truncweibull_min.rvs(0.3, 0.05, 0.1, size=1).item()))
 
 def get_revenue(D, Z, selling_prices):
     # CALCULATE THE REVENUE
@@ -303,7 +303,6 @@ class DiffSolution:
                     'U': round(U, 2),
                     'L': round(L, 2),
                     'P': round(P, 2),
-                    "Fleet size": fleet_info.fleet.shape[0],
                 }
             
                 # print(output)
