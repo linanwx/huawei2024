@@ -1,12 +1,12 @@
 import time
 from utils import (load_problem_data,
                    load_solution)
-from evaluation import evaluation_function
+from evaluation_official import evaluation_function
 
 
 # LOAD SOLUTION
 # solution = load_solution('./data/solution_example_repeat_org.json')
-solution = load_solution('./output/6053_5.27464e+08.json')
+solution = load_solution('./output/3329_6.78760e+08.json')
 
 # LOAD PROBLEM DATA
 demand, datacenters, servers, selling_prices = load_problem_data()
@@ -20,7 +20,7 @@ score = evaluation_function(solution,
                             datacenters,
                             servers,
                             selling_prices,
-                            seed=6053, verbose = 1)
+                            seed=3329, verbose = 1)
 
 # END TIMER
 end_time = time.time()

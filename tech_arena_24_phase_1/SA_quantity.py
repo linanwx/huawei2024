@@ -3,7 +3,7 @@ import pandas as pd
 import random
 import copy
 
-from evaluation_diff_quantity import DiffInput, DiffSolution
+from tech_arena_24_phase_1.SA_quantity_new.evaluation_diff_quantity import DiffInput, DiffSolution
 from utils import save_solution
 
 TIME_STEPS = 168 

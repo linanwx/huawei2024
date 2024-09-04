@@ -13,7 +13,7 @@ def known_seeds(mode):
                 2543, 
                 8501]
     elif mode == 'test':
-        return []
+        return [3329, 4201, 8761, 2311, 2663, 4507, 6247, 2281, 4363, 5693]
 
 
 

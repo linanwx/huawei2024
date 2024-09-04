@@ -201,16 +201,23 @@ class DiffSolution:
     seed_state = None                           # 在生成demand后的种子，用于评估函数
     map_demand_cache: dict = None               # 缓存每个时间步骤的需求
 
-    def __init__(self,seed=None ,path=None):
+    def __init__(self,seed=None ,path=None, verbose=False):
         np.random.seed(seed)
+        self.seed = seed
         # 初始化工作，先加载数据
         if path is None:
             path = './data/'
         self.load_data(path)
         self.demand = get_actual_demand(self.demand) # 根据seed获取修正后的demand
+        # self.demand.to_csv(f'{self.seed}_demand.csv', index=False) # 保存demand
         self.seed_state = np.random.get_state()      # 生成demand后固定种子
         self.map_demand_cache = self.cache_time_step_demand(self.demand) # 缓存每个时间步骤的需求
         self.selling_prices_cache = change_selling_prices_format(self.selling_prices)
+        self.verbose = verbose
+
+    def _print(self, *args, **kwargs):
+        if self.verbose:
+            print(*args, **kwargs)
 
     def cache_time_step_demand(self, demand:pd.DataFrame):
         cache = {}
@@ -274,7 +281,8 @@ class DiffSolution:
                 # fleet_info.purchase_cost = buy_actions['purchase_price'].sum()
 
                 # 提前计算服务器的到期时间，方便后面删除过期服务器
-                life_expectancies = buy_actions['life_expectancy'] + ts
+                # 服务器到期取决于寿命和手动解散时间的最小值
+                life_expectancies = np.minimum(buy_actions['life_expectancy'] + ts, buy_actions['dismiss'])
                 for server_id, expire_ts in zip(buy_actions['server_id'], life_expectancies):
                     if expire_ts in fleet_info.expiration_map:
                         fleet_info.expiration_map[expire_ts].append(server_id)
@@ -322,6 +330,11 @@ class DiffSolution:
         # 3. 为解添加售价数据
         solution = solution.merge(self.selling_prices, how='left', on=['server_generation', 'latency_sensitivity'])
 
+        # 如果 solution 中没有 "dismiss" 列， 则添加该列并设置为极大值
+        if 'dismiss' not in solution.columns:
+            self._print("Dismiss column not found in the solution. Adding a column with a default value of 10000.")
+            solution["dismiss"] = pd.Series([10000] * len(solution), dtype=int)
+
         solution["lifespan"] = pd.Series([0] * len(solution), dtype=int)
         solution.set_index('time_step', inplace=True)
         # print("solution.dtypes")
@@ -348,10 +361,13 @@ class DiffSolution:
         # 连接每个步骤的费用数据
         solution = self.solution_data_preparation(solution)
 
+        # solution.to_csv(f'{self.seed}_solution.csv', index=False)
+
         # 初始化 fleet 信息 fleet使用和解相同的布局，设置server_id为index
         column_dtypes = solution.dtypes.to_dict()
         fleet = pd.DataFrame(columns=solution.columns).astype(column_dtypes)
         fleet.set_index(['server_id'], drop=False, inplace=True)
+        
 
         fleet_info:FleetInfo = FleetInfo(fleet=fleet, expiration_map={})
 
@@ -397,13 +413,14 @@ class DiffSolution:
                     'P': round(P, 2),
                 }
             
-                # print(output)
+                self._print(output)
                 # print(fleet_info.fleet)
             else:
-                print("No fleet information available.")
+                # print("No fleet information available.")
+                pass
         total_value = (df_ULP['U'] * df_ULP['L'] * df_ULP['P']).sum()
         end_time = time.time()
 
-        print(f"Time SA_evaluation_function taken: {end_time - start_time} seconds")
+        # print(f"Time SA_evaluation_function taken: {end_time - start_time} seconds")
 
         return total_value
