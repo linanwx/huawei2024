@@ -1,6 +1,7 @@
 # 使用差分评估 重新实现evaluation.py中的评估函数
 # 当前版本先优化评估函数的性能，后续版本再考虑实现差分的计算SA迭代过程中解变动导致的对应评估值的变化
 
+from collections import defaultdict
 import time
 import numpy as np
 import pandas as pd
@@ -9,6 +10,48 @@ from dataclasses import dataclass
 from scipy.stats import truncweibull_min
 
 from evaluation import get_actual_demand
+
+class DynamicCapacityTracker:
+    def __init__(self):
+        self.server_generation_set = defaultdict(set)  # key: server_generation, value: set of latency_sensitivity
+        self.latency_sensitivity_set = defaultdict(set)  # key: latency_sensitivity, value: set of server_generation
+        self.capacity_table = pd.DataFrame()
+
+    def add_server(self, gen, lat, capacity):
+        # 如果 capacity_table 是空的，初始化至少一列或一行
+        if self.capacity_table.empty:
+            self.capacity_table = pd.DataFrame(0, index=[gen], columns=[lat])
+        else:
+            # 检查并添加新的列
+            if lat not in self.capacity_table.columns:
+                self.capacity_table[lat] = 0
+
+            # 检查并添加新的行
+            if gen not in self.capacity_table.index:
+                self.capacity_table.loc[gen] = [0] * len(self.capacity_table.columns)
+
+        # 更新容量
+        self.capacity_table.loc[gen, lat] += capacity
+
+        # 更新集合，记录该服务器及其延迟敏感度
+        self.server_generation_set[gen].add(lat)
+        self.latency_sensitivity_set[lat].add(gen)
+
+    def remove_server(self, gen, lat, capacity):
+        # 移除服务器，更新容量表
+        self.capacity_table.loc[gen, lat] -= capacity
+        # 如果容量为0，删除连接
+        if self.capacity_table.loc[gen, lat] == 0:
+            self.server_generation_set[gen].discard(lat)
+            self.latency_sensitivity_set[lat].discard(gen)
+        # 如果没有剩余连接，删除节点
+        if not self.server_generation_set[gen]:
+            self.capacity_table.drop(gen, axis=0, inplace=True)
+        if not self.latency_sensitivity_set[lat]:
+            self.capacity_table.drop(lat, axis=1, inplace=True)
+
+    def get_capacity_table(self):
+        return self.capacity_table
 
 TIME_STEPS = 168 
 
@@ -30,10 +73,9 @@ class FleetInfo:
     """
     fleet: pd.DataFrame
     expiration_map: dict
-    # purchase_cost: float = 0.0
-
-
-def get_time_step_fleet(solution:pd.DataFrame, ts):
+    total_capacity_table: DynamicCapacityTracker = None
+    
+def get_time_step_solution(solution:pd.DataFrame, ts):
     if ts in solution.index:
         s = solution.loc[[ts]]
         s = s.set_index('server_id', drop=False, inplace=False)
@@ -70,7 +112,7 @@ def get_utilization(D, Z):
         return 0
 
 # 重点优化函数 
-def get_capacity_by_server_generation_latency_sensitivity(fleet):
+def get_capacity_by_server_generation_latency_sensitivity(fleet:pd.DataFrame):
     fleet['total_capacity'] = fleet['capacity'] * fleet['quantity']
     Z = fleet.groupby(by=['server_generation', 'latency_sensitivity',], observed=True)['total_capacity'].sum().unstack()
     Z = Z.map(adjust_capacity_by_failure_rate, na_action='ignore')
@@ -84,7 +126,19 @@ def get_normalized_lifespan(fleet):
 
 def adjust_capacity_by_failure_rate(x):
     # HELPER FUNCTION TO CALCULATE THE FAILURE RATE f
-    return int(x * 1 - truncweibull_min.rvs(0.3, 0.05, 0.1, size=1).item())
+    return int(x * (1 - truncweibull_min.rvs(0.3, 0.05, 0.1, size=1).item()))
+
+def adjust_capacity_by_failure_rate_numpy(x):
+    # 使用 NumPy 矢量化操作来计算故障率
+    failure_rate = truncweibull_min.rvs(0.3, 0.05, 0.1, size=x.shape)
+    return (x * (1 - failure_rate)).astype(int)
+
+def get_capacity_by_server_generation_latency_sensitivity_optimized(total_capacity_table: DynamicCapacityTracker):
+    Z = total_capacity_table.capacity_table.copy()
+
+    # 使用原来的方式调整容量
+    Z = adjust_capacity_by_failure_rate_numpy(Z.values)
+    return pd.DataFrame(Z, index=total_capacity_table.capacity_table.index, columns=total_capacity_table.capacity_table.columns)
 
 def get_revenue(D, Z, selling_prices):
     # CALCULATE THE REVENUE
@@ -119,7 +173,7 @@ def get_cost(fleet_info:FleetInfo):
     cost += np.where(x == 1, fleet['purchase_price'] * fleet['quantity'], 0)
     
     # 添加移动成本，考虑数量
-    cost += np.where(fleet['moved'] == 1, fleet['cost_of_moving'] * fleet['quantity'], 0)
+    # cost += np.where(fleet['moved'] == 1, fleet['cost_of_moving'] * fleet['quantity'], 0)
     
     return cost.sum()
 
@@ -188,15 +242,32 @@ class DiffSolution:
         self.selling_prices['server_generation'] = self.selling_prices['server_generation'].astype('category')
         self.selling_prices['latency_sensitivity'] = self.selling_prices['latency_sensitivity'].astype('category')
 
-    def update_fleet(self, ts: int, fleet_info:FleetInfo, ts_fleet:pd.DataFrame) -> FleetInfo:
+    def update_fleet(self, ts: int, fleet_info:FleetInfo, ts_solution:pd.DataFrame) -> FleetInfo:
         fleet = fleet_info.fleet
+        capacity_tracker = fleet_info.total_capacity_table  # 动态容量追踪器
 
-        if not ts_fleet.empty:
-            buy_actions = ts_fleet[ts_fleet['action'] == 'buy']
-            buy_actions["lifespan"] = 0
-            buy_actions["moved"] = 0
+        # if ts == 44:
+        #     print("fleet")
+        #     print(fleet)
+        #     # 检查每列类型
+        #     print("fleet.dtypes")
+        #     print(fleet.dtypes)
+
+        if not ts_solution.empty:
+            buy_actions = ts_solution[ts_solution['action'] == 'buy']
             
             if not buy_actions.empty:
+                if capacity_tracker is None:
+                    capacity_tracker = DynamicCapacityTracker()
+
+                # 动态添加出现的 server_generation 和 latency_sensitivity
+                for _, row in buy_actions.iterrows():
+                    gen = row['server_generation']
+                    lat = row['latency_sensitivity']
+                    capacity = row['capacity'] * row['quantity']
+
+                    capacity_tracker.add_server(gen, lat, capacity)
+
                 fleet = pd.concat([fleet, buy_actions], ignore_index=False)
 
                 # 计算并累加购买成本
@@ -210,30 +281,35 @@ class DiffSolution:
                     else:
                         fleet_info.expiration_map[expire_ts] = [server_id]
 
-            move_actions = ts_fleet[ts_fleet['action'] == 'move']
-            if not move_actions.empty:
-                move_indices = move_actions['server_id']
-                fleet.loc[move_indices, 'datacenter_id'] = move_actions['datacenter_id']
-                fleet.loc[move_indices, 'moved'] = 1
+            # move_actions = ts_fleet[ts_fleet['action'] == 'move']
+            # if not move_actions.empty:
+            #     move_indices = move_actions['server_id']
+            #     fleet.loc[move_indices, 'datacenter_id'] = move_actions['datacenter_id']
+            #     fleet.loc[move_indices, 'moved'] = 1
 
-            dismiss_actions = ts_fleet[ts_fleet['action'] == 'dismiss']
-            if not dismiss_actions.empty:
-                dismiss_indices = dismiss_actions['server_id']
-                fleet.drop(index=dismiss_indices, inplace=True)
+            # dismiss_actions = ts_fleet[ts_fleet['action'] == 'dismiss']
+            # if not dismiss_actions.empty:
+            #     dismiss_indices = dismiss_actions['server_id']
+            #     fleet.drop(index=dismiss_indices, inplace=True)
 
         fleet['lifespan'] += 1
 
-        # fleet.drop(fleet.index[fleet['lifespan'] >= fleet['life_expectancy']], inplace=True)
-        # 使用 expiration_map 来删除过期的服务器
+        # 删除过期的服务器（如果有）
         if ts in fleet_info.expiration_map:
             expire_indices = fleet_info.expiration_map.pop(ts)
-            # 检查一下fleet的index
-            # print(f"fleet = fleet.drop, fleet index: {fleet.index}")
-            # fleet.drop(index=expire_indices, inplace=True)
             mask = ~fleet.index.isin(expire_indices)
+            expired_fleet = fleet[~mask]
+            for _, row in expired_fleet.iterrows():
+                gen = row['server_generation']
+                lat = row['latency_sensitivity']
+                capacity = row['capacity'] * row['quantity']
+
+                # 使用容量追踪器动态删除服务器容量
+                capacity_tracker.remove_server(gen, lat, capacity)
             fleet = fleet[mask]
 
         fleet_info.fleet = fleet
+        fleet_info.total_capacity_table = capacity_tracker
         return fleet_info
 
     def solution_data_preparation(self, solution:pd.DataFrame):
@@ -242,11 +318,16 @@ class DiffSolution:
         solution = solution.merge(self.servers, how='left', on='server_generation')
         # 2. 为解添加数据中心的数据
         solution = solution.merge(self.datacenters, how='left', on='datacenter_id')
+        solution = solution.drop(columns=['slots_capacity'])
         # 3. 为解添加售价数据
         solution = solution.merge(self.selling_prices, how='left', on=['server_generation', 'latency_sensitivity'])
-        
-        solution.set_index('time_step', inplace=True)
 
+        solution["lifespan"] = pd.Series([0] * len(solution), dtype=int)
+        solution.set_index('time_step', inplace=True)
+        # print("solution.dtypes")
+        # print(solution.dtypes)
+        # print("solution")
+        # print(solution)
         return solution
 
     def SA_evaluation_function(self, diff_input:DiffInput, time_steps=TIME_STEPS):
@@ -270,7 +351,8 @@ class DiffSolution:
         # 初始化 fleet 信息 fleet使用和解相同的布局，设置server_id为index
         column_dtypes = solution.dtypes.to_dict()
         fleet = pd.DataFrame(columns=solution.columns).astype(column_dtypes)
-        fleet = fleet.set_index(['server_id'])
+        fleet.set_index(['server_id'], drop=False, inplace=True)
+
         fleet_info:FleetInfo = FleetInfo(fleet=fleet, expiration_map={})
 
         for ts in range(start, time_steps + 1):
@@ -279,7 +361,7 @@ class DiffSolution:
             # 从缓存获取当前步骤需求
             D = self.map_demand_cache[ts]
             # 从解获取当前步骤操作
-            ts_fleet = get_time_step_fleet(solution, ts)
+            ts_fleet = get_time_step_solution(solution, ts)
 
             if ts_fleet.empty and fleet_info.fleet.empty:
                 continue
@@ -288,13 +370,16 @@ class DiffSolution:
 
             if fleet_info.fleet.shape[0] > 0:
                 # 计算调整后容量 ！！！超级耗时！！！
-                Zf = get_capacity_by_server_generation_latency_sensitivity(fleet_info.fleet)
+                Zf = get_capacity_by_server_generation_latency_sensitivity_optimized(fleet_info.total_capacity_table)
 
-                # print(Zf)
-                # if ts >= 21:
+                # if ts == 7:
+                #     print(Zf)
                 #     exit()
 
                 U = get_utilization(D, Zf)
+
+                # print(U)
+                # exit()
 
                 L = get_normalized_lifespan(fleet_info.fleet)
 
@@ -310,7 +395,6 @@ class DiffSolution:
                     'U': round(U, 2),
                     'L': round(L, 2),
                     'P': round(P, 2),
-                    "Fleet size": fleet_info.fleet.shape[0],
                 }
             
                 # print(output)
