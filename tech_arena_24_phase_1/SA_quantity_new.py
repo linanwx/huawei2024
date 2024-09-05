@@ -1,20 +1,39 @@
+from datetime import datetime
 import math
+import os
 import numpy as np
 import pandas as pd
 import random
 import copy
 import threading
+import logging
 
 from evaluation_diff_quantity import DiffInput, DiffSolution
 from utils import save_solution
 
 TIME_STEPS = 168
-DISMISS_MAX = 10000
+generate_new_time_step_STEP = 20
+
+current_time = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
+log_filename = f'./output/simulation_{current_time}.log'
+output_dir = './output/'
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+# 1. 配置 logging，输出日志到文件
+logging.basicConfig(
+    filename=log_filename,  # 指定日志文件
+    filemode='w',  # 写入模式，'w' 会覆盖已有文件，'a' 是追加模式
+    level=logging.DEBUG,  # 日志级别，DEBUG 可以记录所有级别的日志
+    format='%(asctime)s - %(levelname)s - %(message)s'  # 日志格式
+)
+logger = logging.getLogger()
+print(f"Logger handlers: {logger.handlers}")
 
 
 def generate_new_time_step(old_time_step, TIME_STEPS):
-    min_shift = max(-50, 1 - old_time_step)  # 确保不小于1
-    max_shift = min(50, TIME_STEPS - old_time_step)  # 确保不大于TIME_STEPS
+    min_shift = max(-generate_new_time_step_STEP, 1 - old_time_step)  # 确保不小于1
+    max_shift = min(generate_new_time_step_STEP, TIME_STEPS - old_time_step)  # 确保不大于TIME_STEPS
 
     if min_shift > max_shift:
         return None, "无法生成有效的新时间段"
@@ -38,6 +57,7 @@ class SlotAvailabilityManager:
     def _print(self, *args, **kwargs):
         if self.verbose:
             print(*args, **kwargs)
+            logging.debug(" ".join(map(str, args)))
 
     def __init__(self, datacenters, verbose=False):
         self.slots_table = pd.DataFrame({'time_step': np.arange(1, TIME_STEPS + 1)})
@@ -69,7 +89,26 @@ class SlotAvailabilityManager:
             self._print(f"购买了 {slots_needed * (end_time - start_time)} 个插槽，时间段 {start_time} - {end_time}, 数据中心 {data_center}")
         elif operation == 'cancel':
             self._print(f"取消了 {slots_needed * (end_time - start_time)} 个插槽，时间段 {start_time} - {end_time}, 数据中心 {data_center}")
+    
+    def simulate_slot_availability(self, start_time, end_time, data_center, slots_needed, existing_start, existing_end):
+        """
+        模拟调整时间段后的插槽可用性检查，不实际更改插槽表。
+        """
+        end_time = min(end_time, TIME_STEPS)
+        existing_end = min(existing_end, TIME_STEPS)
 
+        for ts in range(start_time, end_time + 1):
+            simulated_slots = self.slots_table.at[ts - 1, data_center]
+            
+            # 如果时间段内是已经被占用的部分，则先加回原来占用的插槽
+            if existing_start <= ts <= existing_end:
+                simulated_slots += slots_needed
+
+            # 检查新的时间段是否可行
+            if simulated_slots < slots_needed:
+                return False
+
+        return True
 
 class SimulatedAnnealing:
     def __init__(self, initial_solution, slot_manager, seed, initial_temp, min_temp, alpha, max_iter, verbose=False):
@@ -88,9 +127,8 @@ class SimulatedAnnealing:
         self.operation_probabilities = {
             'buy': 4,
             'adjust_dismiss_time': 1,
-            'adjust_time_slot': 0,
-            'replace_server': 0,
-            "adjust": 0
+            'adjust_time_slot': 1,
+            "adjust_quantity": 1
         }
         self.low_pass_filter_alpha = 0.99
         self.initial_operation_probabilities = copy.deepcopy(self.operation_probabilities)
@@ -98,11 +136,37 @@ class SimulatedAnnealing:
         self.step_count = int(math.log(min_temp / initial_temp) / math.log(alpha))
         self._print(f"将在 {self.step_count} 步中完成退火过程")
 
-        self.operation_success_counts = {op: 0 for op in self.operation_probabilities.keys()}
+        # self.operation_success_counts = {op: 0 for op in self.operation_probabilities.keys()}
+
+        # 详细操作统计，细分操作类别
+        self.detailed_operation_counts = {
+            'buy_life_expectancy': 0,
+            'buy_custom_life': 0,
+        }
+
+    def log_detailed_operation(self, operation_type, sub_type):
+        """用于记录具体的操作细分类型"""
+        detailed_key = f"{operation_type}_{sub_type}"
+        if detailed_key in self.detailed_operation_counts:
+            self.detailed_operation_counts[detailed_key] += 1
+        else:
+            self.detailed_operation_counts[detailed_key] = 1
+    def log_detailed_operation_counts(self):
+        """打印操作的详细统计"""
+        self._print("\nDetailed operation breakdown:")
+        for operation, count in self.detailed_operation_counts.items():
+            self._print(f"{operation}: {count} times")
+
+    def print_standard_info(self, server_id, datacenter_id, server_generation, operation):
+        """标准信息输出，调用一次即可"""
+        standard_info = f"[ServerID: {server_id}] [DataCenterID: {datacenter_id}] [server_generation: {server_generation}] [Operation: {operation}]"
+        print(standard_info)
+        logging.debug(standard_info)
 
     def _print(self, *args, **kwargs):
         if self.verbose:
             print(*args, **kwargs)
+            logging.debug(" ".join(map(str, args)))
 
     def choose_operation(self):
         operations = list(self.operation_probabilities.keys())
@@ -127,6 +191,7 @@ class SimulatedAnnealing:
     def generate_neighbor(self, current_solution, servers, datacenters):
         self.operation_type = self.choose_operation()
         self.pending_updates = []  
+        self.pending_sub_type = ""
 
         if self.operation_type == 'buy':
             self._print("临域生成：进行buy操作")
@@ -134,11 +199,17 @@ class SimulatedAnnealing:
         elif self.operation_type == 'adjust_dismiss_time':
             self._print("临域生成：进行dismiss时间调整操作")
             solution, errinfo = self.adjust_dismiss_time(current_solution, servers)
+        elif self.operation_type == 'adjust_time_slot':
+            self._print("临域生成：进行时间段调整操作")
+            solution, errinfo = self.adjust_time_slot(current_solution, servers)
+        elif self.operation_type == 'adjust_quantity':
+            self._print("临域生成：进行数量调整操作")
+            solution, errinfo = self.adjust_quantity(current_solution, servers)
         else:
             solution, errinfo = None, "无效的操作"
             self._print(errinfo)
         
-        return solution
+        return solution, errinfo
 
     def generate_new_purchase(self, current_solution, servers, datacenters):
         time_step = random.randint(1, TIME_STEPS)
@@ -155,13 +226,26 @@ class SimulatedAnnealing:
         life_expectancy = selected_server_type['life_expectancy']
         slots_size = selected_server_type['slots_size']
 
-        max_available_slots = self.slot_manager.get_maximum_available_slots(time_step, time_step + life_expectancy, data_center)
+        # 50% 概率决定是否设置随机过期时间
+        if random.random() < 0.5:
+            # 设置随机的过期时间
+            dismiss_life = random.randint(1, life_expectancy)
+            self.pending_sub_type = 'custom_life'  # 暂存操作类型
+        else:
+            # 否则使用默认的最大寿命
+            dismiss_life = life_expectancy  # 默认使用最大寿命
+            self.pending_sub_type = 'life_expectancy'  # 暂存操作类型
+
+        # 计算基于 dismiss_life 的可用插槽
+        max_available_slots = self.slot_manager.get_maximum_available_slots(time_step, time_step + dismiss_life, data_center)
 
         if max_available_slots >= slots_size:
-            max_purchase_count = max_available_slots // slots_size // 4  
+            max_purchase_count = int(max_available_slots // slots_size * 0.25)  # 限制为可用插槽的 25%
             purchase_count = random.randint(1, max(1, max_purchase_count))
             total_slots_needed = purchase_count * slots_size
             ID = self.id_gen.next_id()
+
+            # 构造新的解决方案行
             new_rows = [{
                 'time_step': time_step,
                 'datacenter_id': data_center,
@@ -169,14 +253,17 @@ class SimulatedAnnealing:
                 'server_id': ID,
                 'action': 'buy',
                 'quantity': purchase_count,
-                'dismiss': DISMISS_MAX,
+                'dismiss_life_expectancy': dismiss_life,
             }]
             new_solution = pd.concat([current_solution, pd.DataFrame(new_rows)], ignore_index=True)
-            self.pending_updates = [(time_step, time_step + life_expectancy, data_center, total_slots_needed, 'buy')]
-            self._print(f"购买了 {purchase_count} 台 {server_generation} 服务器, 在数据中心 {data_center} 服务器 {ID}，时间段 {time_step} - {time_step + life_expectancy}, 数据中心 {data_center}")
+
+            # 记录更新操作，不立即执行
+            self.pending_updates = [(time_step, time_step + dismiss_life, data_center, total_slots_needed, 'buy')]
+            self.print_standard_info(server_id=ID, datacenter_id=data_center, server_generation=server_generation, operation="buy")
+            self._print(f"购买了 {purchase_count} 台服务器, 时间段 {time_step} - {time_step + dismiss_life}, 过期寿命 {dismiss_life}")
             return new_solution, None
         else:
-            return None, f"剩余插槽数量无法选购当前种类服务器，当前需要{slots_size}"
+            return None, f"数据中心 {data_center} 剩余插槽数量 {max_available_slots} 无法选购当前种类服务器，当前需要 {slots_size} 插槽"
 
     def adjust_dismiss_time(self, current_solution, servers):
         if current_solution.empty:
@@ -196,35 +283,199 @@ class SimulatedAnnealing:
 
         buy_time_step = selected_action['time_step']
         server_generation = selected_action['server_generation']
-        life_expectancy = servers.loc[servers['server_generation'] == server_generation, 'life_expectancy'].values[0]
 
-        # 获取当前的 dismiss 时间，如果它未被修改过，使用购买时间步 + life_expectancy
-        current_dismiss_time = selected_action['dismiss'] if selected_action['dismiss'] != DISMISS_MAX else buy_time_step + life_expectancy
-        current_dismiss_time = min(current_dismiss_time, TIME_STEPS + 1)
+        # 获取当前的 dismiss 寿命
+        current_dismiss_life = selected_action['dismiss_life_expectancy']
+        # 换算成真实的 dismiss 时间
+        real_dismiss_time = min(buy_time_step + current_dismiss_life, TIME_STEPS + 1)
 
-        # 计算最小截止时间
-        min_dismiss_time = max(current_dismiss_time - TIME_STEPS // 5, buy_time_step)
-
-        if min_dismiss_time >= current_dismiss_time:
-            return None, "无法调整截止时间, 最小截止时间大于等于当前截止时间"
-
-        # 在[min_dismiss_time, current_dismiss_time]范围内随机生成新的截止时间
-        new_dismiss_time = random.randint(min_dismiss_time, current_dismiss_time)
+        if current_dismiss_life - 1 <= 1 :
+            error_message = (
+                f"无法调整到最小值：当前 dismiss 寿命为 {current_dismiss_life}，"
+                f"但最小可调整值已达到1。"
+                f"服务器ID: {selected_action['server_id']}，"
+                f"购买时间步: {buy_time_step}, 数据中心: {selected_action['datacenter_id']}, "
+                f"服务器生成代: {server_generation}"
+            )
+            self._print(error_message)
+            return None, "无法调整到最小值，已经是1"
+        # 在[min_dismiss_time, current_dismiss_life]范围内随机生成新的解散时间
+        new_dismiss_life = random.randint(1, current_dismiss_life - 1)
 
         # 更新选定的解的 dismiss 时间
-        new_solution.at[selected_action_index, 'dismiss'] = new_dismiss_time
+        new_solution.at[selected_action_index, 'dismiss_life_expectancy'] = new_dismiss_life
 
         slots_size = servers.loc[servers['server_generation'] == server_generation, 'slots_size'].values[0]
         total_slots_needed = selected_action['quantity'] * slots_size
 
-        # 如果新的 dismiss 时间比当前 dismiss 时间小，则需要释放插槽
-        if new_dismiss_time < current_dismiss_time:
-            self.pending_updates.append((new_dismiss_time + 1, current_dismiss_time, selected_action['datacenter_id'], total_slots_needed, 'cancel'))
+        new_real_dismiss_time = buy_time_step + new_dismiss_life
 
-        self._print(f"调整了购买操作的截止时间: 服务器 {selected_action['server_id']}, 购买时间 {buy_time_step}, 原截止时间{current_dismiss_time} 新的截止时间: {new_dismiss_time}")
+        # 如果新的 dismiss 时间比当前 dismiss 时间小，则需要释放插槽
+        if new_real_dismiss_time < real_dismiss_time:
+            slots_to_release = total_slots_needed
+            self.pending_updates.append((new_real_dismiss_time + 1, real_dismiss_time, selected_action['datacenter_id'], slots_to_release, 'cancel'))
+
+        self.print_standard_info(server_id=selected_action['server_id'], datacenter_id=selected_action['datacenter_id'], server_generation=server_generation, operation="dismiss")
+        self._print(f"调整了购买操作的截止时间: 购买时间 {buy_time_step}, 原截止时间{real_dismiss_time}, 新的截止时间: {new_real_dismiss_time}, 新的裁撤寿命: {new_dismiss_life}")
 
         return new_solution, None
 
+    def adjust_time_slot(self, current_solution, servers):
+        if current_solution.empty:
+            return None, "空解"
+
+        # 深拷贝当前解，防止修改原解
+        new_solution = current_solution.copy(deep=True)
+
+        # 随机选择一个现有的购买操作
+        buy_actions = new_solution[new_solution['action'] == 'buy']
+        if buy_actions.empty:
+            return None, "无可用购买操作步骤"
+
+        selected_action_index = random.choice(buy_actions.index)
+        selected_action = new_solution.loc[selected_action_index]
+
+        # 获取服务器的当前时间步和自定义寿命
+        old_time_step = selected_action['time_step']
+        server_generation = selected_action['server_generation']
+        slots_size = servers.loc[servers['server_generation'] == server_generation, 'slots_size'].values[0]
+        
+        # 注意此处，使用的是 dismiss_life_expectancy 
+        dismiss_life_expectancy = selected_action['dismiss_life_expectancy']
+
+        # 生成新的时间段（随机前移或后移）
+        new_time_step, msg = generate_new_time_step(old_time_step, TIME_STEPS)
+        if new_time_step is None:
+            return None, msg
+
+        if new_time_step < 1 or new_time_step > TIME_STEPS:
+            return None, "新时间段超出范围"
+
+        data_center = selected_action['datacenter_id']
+        required_slots = slots_size * selected_action['quantity']
+        # 使用模拟方法检查新时间段插槽可用性
+        if self.slot_manager.simulate_slot_availability(new_time_step, new_time_step + dismiss_life_expectancy, data_center, required_slots, old_time_step, old_time_step + dismiss_life_expectancy):
+            # 如果可行，才更新购买操作和插槽使用
+            new_solution.at[selected_action_index, 'time_step'] = new_time_step
+
+            # 更新插槽占用，记录需要的插槽更新操作
+            self.pending_updates.append((old_time_step, old_time_step + dismiss_life_expectancy, data_center, required_slots, 'cancel'))
+            self.pending_updates.append((new_time_step, new_time_step + dismiss_life_expectancy, data_center, required_slots, 'buy'))
+
+            self.print_standard_info(server_id=selected_action['server_id'], datacenter_id=data_center, server_generation=server_generation, operation="time_slot")
+            self._print(f"调整了购买操作的时间段: 原时间段 {old_time_step}, 新时间段 {new_time_step}")
+            return new_solution, None
+        else:
+            available_slots_new = self.slot_manager.get_maximum_available_slots(new_time_step, new_time_step + dismiss_life_expectancy, data_center)
+            available_slots_old = self.slot_manager.get_maximum_available_slots(old_time_step, old_time_step + dismiss_life_expectancy, data_center)
+            
+            self._print(
+                f"新的时间段插槽不足: "
+                f"原时间段可用插槽: {available_slots_old}, 新时间段可用插槽: {available_slots_new}, "
+                f"所需插槽: {required_slots}, "
+                f"数据中心: {data_center}, "
+                f"旧时间段: {old_time_step}-{old_time_step + dismiss_life_expectancy}, "
+                f"新时间段: {new_time_step}-{new_time_step + dismiss_life_expectancy}"
+            )
+            return None, "新的时间段插槽不足"
+
+
+    def adjust_quantity(self, current_solution, servers):
+        # 如果当前解是空的，直接返回
+        if current_solution.empty:
+            return None, "空解"
+
+        # 深拷贝当前的解，防止修改原解
+        new_solution = current_solution.copy(deep=True)
+
+        # 随机选择一个现有的购买操作
+        buy_actions = new_solution[new_solution['action'] == 'buy']
+        if buy_actions.empty:
+            return None, "无可用购买操作步骤"
+
+        # 随机选择一个购买操作
+        selected_action_index = random.choice(buy_actions.index)
+        selected_action = new_solution.loc[selected_action_index]
+
+        # 根据server_generation获取对应的slots_size
+        server_generation = selected_action['server_generation']
+        slots_size = servers.loc[servers['server_generation'] == server_generation, 'slots_size'].values[0]
+
+        # 获取当前购买数量
+        current_quantity = selected_action['quantity']
+        data_center = selected_action['datacenter_id']
+
+        # 随机决定增加或减少购买数量
+        adjustment_direction = random.choice(["increase", "decrease"])
+
+        if adjustment_direction == "decrease":
+            # 如果当前购买数量已经为1，无法再减少
+            if current_quantity <= 1:
+                print(f"无法调整服务器 {selected_action['server_id']} 到最小值：当前购买数量为 {current_quantity}")
+                return None, "无法调整到最小值，已经是1"
+
+            # 随机减少一定数量，但不能小于1
+            min_quantity = max(1, int (current_quantity * 0.5))  # 减少的最小范围为一半
+            new_quantity = random.randint(min_quantity, current_quantity - 1)
+            reduction_amount = current_quantity - new_quantity
+
+            # 记录需要释放的插槽数（延迟执行）
+            total_slots_to_restore = reduction_amount * slots_size
+            time_step = selected_action['time_step']
+
+            # 更新购买数量
+            new_solution.at[selected_action_index, 'quantity'] = new_quantity
+
+            # 记录更新操作，不立即执行
+            self.pending_updates.append(
+                (time_step, time_step + servers.loc[servers['server_generation'] == server_generation, 'life_expectancy'].values[0],
+                data_center, total_slots_to_restore, 'cancel')
+            )
+            self.pending_sub_type = 'decrease'  # 暂存类型
+            self.print_standard_info(server_id=selected_action['server_id'], datacenter_id=data_center, server_generation=server_generation, operation="quantity")
+            self._print(f"减少了 {reduction_amount} 个服务器, 新数量 {new_quantity}")
+
+        elif adjustment_direction == "increase":
+            # 获取当前时间段内数据中心的可用插槽数
+            available_slots = self.slot_manager.get_maximum_available_slots(
+                selected_action['time_step'], 
+                selected_action['time_step'] + servers.loc[servers['server_generation'] == server_generation, 'life_expectancy'].values[0],
+                data_center
+            )
+
+            # 计算可以增加的最大服务器数量，确保不会超过可用插槽
+            max_additional_servers = int(available_slots // slots_size * 0.25)  # 最大增加数量为可用插槽的一定比例
+            if max_additional_servers <= 0:
+                self._print(
+                    f"无法增加服务器数量: "
+                    f"当前可用插槽: {available_slots}, "
+                    f"每台服务器所需插槽: {slots_size}, "
+                    f"当前服务器数量: {current_quantity}, "
+                    f"数据中心: {data_center}, "
+                    f"时间步长: {selected_action['time_step']}"
+                )
+                return None, "无法增加，插槽不足"
+
+            # 随机增加一定数量，但最多增加到可用插槽允许的最大数量
+            new_quantity = random.randint(current_quantity + 1, current_quantity + max_additional_servers)
+
+            increase_amount = new_quantity - current_quantity
+            total_slots_needed = increase_amount * slots_size
+
+            # 更新购买数量
+            new_solution.at[selected_action_index, 'quantity'] = new_quantity
+
+            # 更新插槽使用情况，记录更新操作，不立即执行
+            time_step = selected_action['time_step']
+            self.pending_updates.append(
+                (time_step, time_step + servers.loc[servers['server_generation'] == server_generation, 'life_expectancy'].values[0],
+                data_center, total_slots_needed, 'buy')
+            )
+            self.pending_sub_type = 'increase'  # 暂存类型
+            self.print_standard_info(server_id=selected_action['server_id'], datacenter_id=data_center, server_generation=server_generation, operation="quantity")
+            self._print(f"增加了 {increase_amount} 个服务器, 新数量 {new_quantity}")
+
+        return new_solution, None
 
     def acceptance_probability(self, old_score, new_score):
         if new_score > old_score:
@@ -237,9 +488,9 @@ class SimulatedAnnealing:
         best_score = current_score
 
         for i in range(self.max_iter):
-            self._print(f"<------------- Iteration {i}/{self.step_count} ------------->")
+            self._print(f"<------------- Iteration {i}/温度最大步数{self.step_count}/固定最大步数{self.max_iter} ------------->")
             self.current_step = i
-            new_solution = self.generate_neighbor(self.current_solution, servers, datacenters)
+            new_solution, errinfo = self.generate_neighbor(self.current_solution, servers, datacenters)
             if new_solution is not None:
                 new_input = DiffInput(is_new=True, step=1, diff_solution=new_solution)
                 new_score = S.SA_evaluation_function(new_input)
@@ -263,7 +514,9 @@ class SimulatedAnnealing:
                         best_score = new_score
                         print(f'\033[92mnew best solution for {self.seed} found with score: {best_score:.5e}\033[0m')
 
-                        self.operation_success_counts[self.operation_type] += 1
+                        # self.operation_success_counts[self.operation_type] += 1
+                        self.log_detailed_operation(self.operation_type, self.pending_sub_type)
+
                 else:
                     self.update_operation_probabilities(self.operation_type, False)
                     self._print(f'\033[91mRejected\033[0m new solution with score: {new_score:.5e}')
@@ -273,11 +526,9 @@ class SimulatedAnnealing:
                     break
             else:
                 self.update_operation_probabilities(self.operation_type, False)
-                self._print(f'\033[94mNo valid neighbor found.\033[0m')
+                self._print(f'\033[94mNo valid neighbor found. {errinfo}\033[0m')
 
-        self._print("\nOperation success counts (leading to score increase):")
-        for operation, count in self.operation_success_counts.items():
-            self._print(f"{operation}: {count} times")
+        self.log_detailed_operation_counts()  # 输出详细的操作统计
         self._print(f'Best solution found with score: {best_score:.5e}')
         return self.best_solution, best_score
 
@@ -287,17 +538,18 @@ class SimulatedAnnealing:
 
 
 def get_my_solution(seed, verbose=False):
+    # 加载服务器和数据中心数据
     servers = pd.read_csv('./data/servers.csv')
     datacenters = pd.read_csv('./data/datacenters.csv')
-
+    # 初始化插槽管理器
     slot_manager = SlotAvailabilityManager(datacenters, verbose=verbose)
-
+    # 初始化解决方案数据框
     initial_solution = pd.DataFrame(columns=['time_step', 'datacenter_id', 'server_generation', 'server_id', 'action', 'quantity'])
-    initial_solution['dismiss'] = pd.Series(dtype='int')
-    
+    initial_solution['dismiss_life_expectancy'] = pd.Series(dtype='int')
+    # 初始化退火算法和差分解
     S = DiffSolution(seed=seed)
-    sa = SimulatedAnnealing(initial_solution, slot_manager=slot_manager, seed=seed, initial_temp=100000, min_temp=100, alpha=0.99, max_iter=500, verbose=verbose)
-
+    sa = SimulatedAnnealing(initial_solution, slot_manager=slot_manager, seed=seed, initial_temp=100000, min_temp=100, alpha=0.995, max_iter=1000, verbose=verbose)
+    # 运行退火算法，获取最佳解决方案
     best_solution, best_score = sa.run(S, servers, datacenters)
 
     expanded_rows = []
@@ -309,11 +561,14 @@ def get_my_solution(seed, verbose=False):
             new_row['server_id'] = f"{row['server_id']}:{i + 1}"
             expanded_rows.append(new_row)
 
+            # 计算真实的解散时间（基于购买时间步长和 dismiss 寿命）
+            real_dismiss_time = row['time_step'] + row['dismiss_life_expectancy']
+
             # 如果dismiss时间小于等于TIME_STEPS，创建dismiss操作
-            if row['dismiss'] <= TIME_STEPS:
+            if row['dismiss_life_expectancy'] <= TIME_STEPS:
                 dismiss_row = new_row.copy()
                 dismiss_row['action'] = 'dismiss'
-                dismiss_row['time_step'] = row['dismiss']
+                dismiss_row['time_step'] = real_dismiss_time
                 dismiss_operations.append(dismiss_row)
 
     expanded_df = pd.DataFrame(expanded_rows)
@@ -321,11 +576,11 @@ def get_my_solution(seed, verbose=False):
 
     # 将buy和dismiss操作合并
     final_df = pd.concat([expanded_df, dismiss_df], ignore_index=True)
-    final_df = final_df.drop(columns=['dismiss'], errors='ignore')
+    final_df = final_df.drop(columns=['dismiss_life_expectancy'], errors='ignore')
 
     save_solution(final_df, f'./output/{seed}_{best_score:.5e}.json')
     save_solution(best_solution, f'./output/quantity_{seed}_{best_score:.5e}.json')
-    print(f'Final best solution: {best_solution}')
+    print(f'Final best solution:\n{best_solution}')
 
     return
 

@@ -13,7 +13,7 @@ def load_solution(path):
     
     return df
 
-solution = load_solution('./output/quantity_3329_4.73862e+07.json')
+solution = load_solution('./output/quantity_3329_2.89906e+08.json')
 S = DiffSolution(seed=3329, verbose=True)
 
 input:DiffInput = DiffInput(is_new=True, step=1, diff_solution=solution)

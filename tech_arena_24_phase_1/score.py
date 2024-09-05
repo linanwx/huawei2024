@@ -55,9 +55,9 @@ def main(directory):
 
     # CALCULATE AVERAGE SCORE
     average_score = calculate_average_score(scores)
-    print(f'Average score: {average_score}')
+    print(f'Average score: {average_score:.5e}')
 
 # Specify the directory where JSON files are located
 if __name__ == "__main__":
-    directory = './24-09-04-1'  # Update this path to your JSON directory
+    directory = './2024-09-05-15'  # Update this path to your JSON directory
     main(directory)

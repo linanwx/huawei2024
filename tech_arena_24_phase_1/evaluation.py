@@ -220,6 +220,8 @@ def check_datacenter_slots_size_constraint(fleet):
     test = slots['slots_size'] > slots['slots_capacity']
     constraint = test.any()
     if constraint:
+        print(slots['slots_size'])
+        print(slots['slots_capacity'])
         raise(ValueError('Constraint 2 has been violated.'))
 
 
@@ -442,7 +444,9 @@ def get_evaluation(solution,
                     #   'O': round(OBJECTIVE, 2),
                       'U': round(U, 2),
                       'L': round(L, 2),
-                      'P': round(P, 2),}
+                      'P': round(P, 2),
+                      'Size': FLEET.shape[0],
+                      }
         else:
             # PREPARE OUTPUT
             output = {'time-step': ts,

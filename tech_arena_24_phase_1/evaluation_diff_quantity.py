@@ -282,7 +282,7 @@ class DiffSolution:
 
                 # 提前计算服务器的到期时间，方便后面删除过期服务器
                 # 服务器到期取决于寿命和手动解散时间的最小值
-                life_expectancies = np.minimum(buy_actions['life_expectancy'] + ts, buy_actions['dismiss'])
+                life_expectancies = np.minimum(buy_actions['life_expectancy'] + ts, buy_actions['dismiss_life_expectancy'] + ts)
                 for server_id, expire_ts in zip(buy_actions['server_id'], life_expectancies):
                     if expire_ts in fleet_info.expiration_map:
                         fleet_info.expiration_map[expire_ts].append(server_id)
@@ -295,7 +295,7 @@ class DiffSolution:
             #     fleet.loc[move_indices, 'datacenter_id'] = move_actions['datacenter_id']
             #     fleet.loc[move_indices, 'moved'] = 1
 
-            # dismiss_actions = ts_fleet[ts_fleet['action'] == 'dismiss']
+            # dismiss_actions = ts_fleet[ts_fleet['action'] == 'dismiss_life_expectancy']
             # if not dismiss_actions.empty:
             #     dismiss_indices = dismiss_actions['server_id']
             #     fleet.drop(index=dismiss_indices, inplace=True)
@@ -331,9 +331,9 @@ class DiffSolution:
         solution = solution.merge(self.selling_prices, how='left', on=['server_generation', 'latency_sensitivity'])
 
         # 如果 solution 中没有 "dismiss" 列， 则添加该列并设置为极大值
-        if 'dismiss' not in solution.columns:
+        if 'dismiss_life_expectancy' not in solution.columns:
             self._print("Dismiss column not found in the solution. Adding a column with a default value of 10000.")
-            solution["dismiss"] = pd.Series([10000] * len(solution), dtype=int)
+            solution["dismiss"] = pd.Series(solution["life_expectancy"], dtype=int)
 
         solution["lifespan"] = pd.Series([0] * len(solution), dtype=int)
         solution.set_index('time_step', inplace=True)
@@ -411,6 +411,7 @@ class DiffSolution:
                     'U': round(U, 2),
                     'L': round(L, 2),
                     'P': round(P, 2),
+                    'Size': fleet_info.fleet['quantity'].sum(),
                 }
             
                 self._print(output)
