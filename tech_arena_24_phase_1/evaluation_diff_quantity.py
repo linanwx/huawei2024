@@ -74,6 +74,8 @@ class FleetInfo:
     fleet: pd.DataFrame
     expiration_map: dict
     total_capacity_table: DynamicCapacityTracker = None
+    purchase_cost: float = 0.0
+    energy_cost: float = 0.0
     
 def get_time_step_solution(solution:pd.DataFrame, ts):
     if ts in solution.index:
@@ -153,7 +155,7 @@ def get_revenue(D, Z, selling_prices):
             r += min(z_ig, d_ig) * p_ig
     return r
 
-def get_cost(fleet_info:FleetInfo):
+def get_cost2(fleet_info:FleetInfo):
     fleet = fleet_info.fleet
     
     # 预计算能源成本，考虑数量
@@ -176,6 +178,28 @@ def get_cost(fleet_info:FleetInfo):
     # cost += np.where(fleet['moved'] == 1, fleet['cost_of_moving'] * fleet['quantity'], 0)
     
     return cost.sum()
+
+def get_cost(fleet_info: FleetInfo):
+    fleet = fleet_info.fleet
+
+    # 提前计算常用值
+    quantity = fleet['quantity']
+
+    # 提前提取常用列
+    lifespan = fleet['lifespan']
+    life_expectancy = fleet['life_expectancy']
+    average_maintenance_fee = fleet['average_maintenance_fee']
+    
+    # 计算维护成本，考虑数量
+    ratio = (1.5 * lifespan) / life_expectancy
+    log_ratio = np.log2(np.maximum(ratio, 1e-10))  # 防止log2(0)的情况
+    maintenance_cost = average_maintenance_fee * (1 + ratio * log_ratio) * quantity
+    
+    # 最后求和总成本
+    total_cost = fleet['total_energy_cost'] + maintenance_cost
+
+    return total_cost.sum() + fleet_info.purchase_cost
+
 
 def get_profit(D, Z, selling_prices, fleet_info):
     # CALCULATE OBJECTIVE P = PROFIT
@@ -252,7 +276,6 @@ class DiffSolution:
     def update_fleet(self, ts: int, fleet_info:FleetInfo, ts_solution:pd.DataFrame) -> FleetInfo:
         fleet = fleet_info.fleet
         capacity_tracker = fleet_info.total_capacity_table  # 动态容量追踪器
-
         # if ts == 44:
         #     print("fleet")
         #     print(fleet)
@@ -274,6 +297,11 @@ class DiffSolution:
                     capacity = row['capacity'] * row['quantity']
 
                     capacity_tracker.add_server(gen, lat, capacity)
+                # 提前计算购买成本
+                fleet_info.purchase_cost = (buy_actions['purchase_price'] * buy_actions['quantity']).sum()
+                # 提前计算能耗成本
+                buy_actions['total_energy_cost'] = (buy_actions['energy_consumption'] * buy_actions['cost_of_energy'] * buy_actions['quantity'])
+                # print(f"Purchase cost at time step {ts}: {fleet_info.purchase_cost}")
 
                 fleet = pd.concat([fleet, buy_actions], ignore_index=False)
 
@@ -373,7 +401,7 @@ class DiffSolution:
 
         for ts in range(start, time_steps + 1):
             # 重置循环内的数据
-            # fleet_info.purchase_cost = 0.0
+            fleet_info.purchase_cost = 0.0
             # 从缓存获取当前步骤需求
             D = self.map_demand_cache[ts]
             # 从解获取当前步骤操作

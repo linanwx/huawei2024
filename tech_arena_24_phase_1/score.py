@@ -43,7 +43,7 @@ def calculate_average_score(scores):
     return sum(scores) / len(scores)
 
 # MAIN FUNCTION
-def main(directory):
+def score_main(directory):
     # LOAD PROBLEM DATA
     demand, datacenters, servers, selling_prices = load_problem_data()
 
@@ -59,5 +59,5 @@ def main(directory):
 
 # Specify the directory where JSON files are located
 if __name__ == "__main__":
-    directory = './2024-09-05-15'  # Update this path to your JSON directory
-    main(directory)
+    directory = './2024-09-06-07'  # Update this path to your JSON directory
+    score_main(directory)
