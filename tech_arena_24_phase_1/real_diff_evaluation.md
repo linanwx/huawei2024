@@ -1,4 +1,3 @@
-
 # DiffSolution 使用指南
 
 本指南介绍如何使用 `DiffSolution` 类及相关函数来进行服务器管理和性能评估。
@@ -13,7 +12,7 @@
 
 ```python
 seed = 42  # 任意随机种子
-solution = DiffSolution(seed)
+solution = DiffSolution(seed, verbose=True)
 ```
 
 ### 2. 创建服务器信息 (`ServerInfo`)
@@ -43,7 +42,15 @@ server_info = ServerInfo(
 solution.apply_server_change(server_info)
 ```
 
-### 4. 评估变更
+### 4. 获取服务器副本
+
+你可以使用 `get_server_copy()` 方法获取已存在服务器的深拷贝。这个方法根据 `server_id` 返回对应的 `ServerInfo` 副本，或者返回 `None` 如果该服务器不存在。
+
+```python
+server_copy = solution.get_server_copy("S1")
+```
+
+### 5. 评估变更
 
 应用服务器变更后，你可以执行差分评估，查看变更对系统的影响。使用 `diff_evaluation()` 方法可以返回当前变更的评估结果。
 
@@ -52,7 +59,7 @@ evaluation_result = solution.diff_evaluation()
 print(f"评估结果: {evaluation_result}")
 ```
 
-### 5. 提交或丢弃变更
+### 6. 提交或丢弃变更
 
 如果对变更结果满意，你可以调用 `commit_server_changes()` 将其永久提交。如果不满意，可以通过 `discard_server_changes()` 方法丢弃变更。
 
@@ -70,7 +77,7 @@ solution.discard_server_changes()
 
 ## 示例使用
 
-以下是一个完整的示例，展示如何创建 `DiffSolution` 实例、应用服务器变更、评估变更并提交。
+以下是一个完整的示例，展示如何创建 `DiffSolution` 实例、应用服务器变更、获取服务器副本、评估变更并提交。
 
 ```python
 # 第一步：创建 DiffSolution 实例
@@ -95,11 +102,15 @@ server_info = ServerInfo(
 # 第四步：应用服务器变更
 solution.apply_server_change(server_info)
 
-# 第五步：评估变更
+# 第五步：获取服务器副本
+server_copy = solution.get_server_copy("S1")
+print(f"服务器副本: {server_copy}")
+
+# 第六步：评估变更
 evaluation_result = solution.diff_evaluation()
 print(f"评估结果: {evaluation_result}")
 
-# 第六步：提交变更
+# 第七步：提交变更
 solution.commit_server_changes()
 
 # 如果对结果不满意，也可以选择丢弃变更
@@ -109,10 +120,11 @@ solution.commit_server_changes()
 ## 关键方法
 
 - `apply_server_change(diff_info)`: 应用服务器变更。
+- `get_server_copy(server_id)`: 获取指定 `server_id` 的服务器副本。
 - `diff_evaluation()`: 评估当前状态下的解。
 - `commit_server_changes()`: 提交所应用的变更。
 - `discard_server_changes()`: 丢弃当前变更，恢复之前状态。
 
 ## 结论
 
-本指南介绍了如何使用 `DiffSolution` 类来管理服务器、应用变更和评估系统性能。通过这些方法，你可以灵活地测试不同场景并决定最终是否提交变更。
+本指南介绍了如何使用 `DiffSolution` 类来管理服务器、应用变更、获取服务器副本和评估系统性能。通过这些方法，你可以灵活地测试不同场景并决定最终是否提交变更。
