@@ -143,7 +143,7 @@ class DiffSolution:
 
         self._init_price_matrix()
         # 初始化一个空解
-        self.__server_map: Dict[str, ServerInfo] = {}
+        self.server_map: Dict[str, ServerInfo] = {}
         # 初始化每一个时间步骤的服务器容量
         self.__capacity_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
         # 初始化每一个时间步骤的需求矩阵
@@ -176,7 +176,7 @@ class DiffSolution:
         self.__capacity_combinations = {t: {} for t in range(TIME_STEPS)}
 
     def get_server_copy(self, server_id:str):
-        server_info = self.__server_map.get(server_id)
+        server_info = self.server_map.get(server_id)
         if server_info is None:
             return None
         return copy.deepcopy(server_info)
@@ -269,11 +269,11 @@ class DiffSolution:
         diff_info = self.__diff_info
         if diff_info.quantity == 0:
             # 如果数量为0，表示删除该服务器
-            if diff_info.server_id in self.__server_map:
-                del self.__server_map[diff_info.server_id]
+            if diff_info.server_id in self.server_map:
+                del self.server_map[diff_info.server_id]
         else:
             # 添加或更新服务器
-            self.__server_map[diff_info.server_id] = diff_info
+            self.server_map[diff_info.server_id] = diff_info
         # 清空当前的差分信息和黑板
         self.__diff_info = None
         self.__blackboard = None
@@ -296,7 +296,7 @@ class DiffSolution:
             )
         self.__diff_info = diff_info
         blackboard = self.__blackboard
-        original_server_info = self.__server_map.get(diff_info.server_id)
+        original_server_info = self.server_map.get(diff_info.server_id)
 
         # Reverse changes for original server if it exists
         if original_server_info is not None:
@@ -305,7 +305,6 @@ class DiffSolution:
         # Apply new server changes
         if diff_info.quantity > 0:
             self._apply_change(blackboard, diff_info, sign=1)
-
 
     def _apply_change(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign=1):
         """
