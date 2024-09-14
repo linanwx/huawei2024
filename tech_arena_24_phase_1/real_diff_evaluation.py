@@ -1,3 +1,4 @@
+import copy
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass, field
@@ -142,7 +143,7 @@ class DiffSolution:
 
         self._init_price_matrix()
         # 初始化一个空解
-        self.server_map: Dict[str, ServerInfo] = {}
+        self.__server_map: Dict[str, ServerInfo] = {}
         # 初始化每一个时间步骤的服务器容量
         self.__capacity_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
         # 初始化每一个时间步骤的需求矩阵
@@ -162,24 +163,30 @@ class DiffSolution:
         # 差分黑板，用于暂存变动
         self.__blackboard: DiffBlackboard = None
         # 当前的差分信息
-        # self.__diff_info: ServerInfo = None
+        self.__diff_info: ServerInfo = None
         # 初始化利用率矩阵
         self.__utilization_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
         # 初始化平均利用率
         self.__average_utilization = np.zeros(TIME_STEPS, dtype=float)
 
         self._load_demand_data('./data/demand.csv', seed)
-        self.verbose = verbose
+        self.__verbose = verbose
 
         self.__cost_details = {t: {'purchase_cost': 0, 'energy_cost': 0, 'maintenance_cost': 0} for t in range(TIME_STEPS)}
         self.__capacity_combinations = {t: {} for t in range(TIME_STEPS)}
 
+    def get_server_copy(self, server_id:str):
+        server_info = self.__server_map.get(server_id)
+        if server_info is None:
+            return None
+        return copy.deepcopy(server_info)
+        
     def __print(self, message):
         """
         根据verbose的值决定是否打印消息。
         :param message: 要打印的消息。
         """
-        if self.verbose:
+        if self.__verbose:
             print(message)
 
     def _init_price_matrix(self):
@@ -228,18 +235,8 @@ class DiffSolution:
 
     def _load_data(self):
         """
-        加载服务器、数据中心和售价数据，并构建快速查找的数据结构。
+        加载售价数据
         """
-        # 加载服务器数据
-        self.__servers_df = pd.read_csv('./data/servers.csv')
-        self.__servers_df['server_generation'] = self.__servers_df['server_generation'].astype(str)
-        self.__server_info_dict = self.__servers_df.set_index('server_generation').to_dict('index')
-
-        # 加载数据中心数据
-        self.__datacenters_df = pd.read_csv('./data/datacenters.csv')
-        self.__datacenters_df['datacenter_id'] = self.__datacenters_df['datacenter_id'].astype(str)
-        self.__datacenter_info_dict = self.__datacenters_df.set_index('datacenter_id').to_dict('index')
-
         # 加载售价数据
         self.__selling_prices_df = pd.read_csv('./data/selling_prices.csv')
         self.__selling_prices_df['server_generation'] = self.__selling_prices_df['server_generation'].astype(str)
@@ -272,11 +269,11 @@ class DiffSolution:
         diff_info = self.__diff_info
         if diff_info.quantity == 0:
             # 如果数量为0，表示删除该服务器
-            if diff_info.server_id in self.server_map:
-                del self.server_map[diff_info.server_id]
+            if diff_info.server_id in self.__server_map:
+                del self.__server_map[diff_info.server_id]
         else:
             # 添加或更新服务器
-            self.server_map[diff_info.server_id] = diff_info
+            self.__server_map[diff_info.server_id] = diff_info
         # 清空当前的差分信息和黑板
         self.__diff_info = None
         self.__blackboard = None
@@ -299,7 +296,7 @@ class DiffSolution:
             )
         self.__diff_info = diff_info
         blackboard = self.__blackboard
-        original_server_info = self.server_map.get(diff_info.server_id)
+        original_server_info = self.__server_map.get(diff_info.server_id)
 
         # Reverse changes for original server if it exists
         if original_server_info is not None:
@@ -386,7 +383,7 @@ class DiffSolution:
         purchase_cost = diff_info.purchase_price * diff_info.quantity * sign
         if 0 <= purchase_time < TIME_STEPS:
             cost_array[purchase_time] += purchase_cost
-            if self.verbose:
+            if self.__verbose:
                 self.__cost_details[purchase_time]['purchase_cost'] += purchase_cost
 
     def _update_moving_cost(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign: int):
@@ -428,7 +425,7 @@ class DiffSolution:
             # 更新成本数组
             if time_start_energy < time_end_energy:
                 cost_array[time_start_energy:time_end_energy] += energy_cost_per_time_step
-                if self.verbose:
+                if self.__verbose:
                     for t in range(time_start_energy, time_end_energy):
                                     self.__cost_details[t]['energy_cost'] += energy_cost_per_time_step
 
@@ -463,7 +460,7 @@ class DiffSolution:
         # 更新成本数组
         cost_array[time_start:time_end] += maintenance_cost_per_time_step
 
-        if self.verbose:
+        if self.__verbose:
             for t in range(time_start, time_end):
                 self.__cost_details[t]['maintenance_cost'] += maintenance_cost_per_time_step[t - time_start]
 
@@ -623,7 +620,7 @@ class DiffSolution:
         # 计算所有时间步乘积的总和
         evaluation_result = np.sum(stepwise_product)
 
-        if self.verbose:
+        if self.__verbose:
             self.__print("\n\n\nEvaluation Result:")
             for t in range(TIME_STEPS):
                 self.__print({
