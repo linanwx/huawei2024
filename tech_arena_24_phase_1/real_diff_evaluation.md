@@ -21,7 +21,7 @@ solution = DiffSolution(seed, verbose=True)
 
 ```python
 move_info = [
-    ServerMoveInfo(time_step=0, target_datacenter='DC1'),  # 迁移到数据中心 DC1
+    ServerMoveInfo(time_step=0, target_datacenter='DC1'),  # 购买到数据中心 DC1
     ServerMoveInfo(time_step=10, target_datacenter='DC2')  # 10 时间步后迁移到 DC2
 ]
 
