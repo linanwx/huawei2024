@@ -4,8 +4,9 @@ from dataclasses import dataclass, field
 from typing import Dict, List
 from evaluation import get_actual_demand
 
+
 TIME_STEPS = 168  # 时间下标从0到167
-FAILURE_RATE = 0.0725  # 故障率
+FAILURE_RATE = 0.0726  # 故障率
 
 # 时延敏感性映射
 LATENCY_SENSITIVITY_MAP = {'low': 0, 'medium': 1, 'high': 2}
@@ -20,6 +21,32 @@ SERVER_GENERATION_MAP = {
     'GPU.S2': 5,
     'GPU.S3': 6
 }
+
+def load_global_data():
+    """
+    Load server, datacenter, and selling price data into global dictionaries.
+    This function should be called before any ServerInfo instances are created.
+    """
+    global server_info_dict, datacenter_info_dict, selling_price_dict
+
+    # Load server data
+    servers_df = pd.read_csv('./data/servers.csv')
+    servers_df['server_generation'] = servers_df['server_generation'].astype(str)
+    server_info_dict = servers_df.set_index('server_generation').to_dict('index')
+
+    # Load datacenter data
+    datacenters_df = pd.read_csv('./data/datacenters.csv')
+    datacenters_df['datacenter_id'] = datacenters_df['datacenter_id'].astype(str)
+    datacenter_info_dict = datacenters_df.set_index('datacenter_id').to_dict('index')
+
+    # Load selling prices
+    selling_prices_df = pd.read_csv('./data/selling_prices.csv')
+    selling_prices_df['server_generation'] = selling_prices_df['server_generation'].astype(str)
+    selling_prices_df['latency_sensitivity'] = selling_prices_df['latency_sensitivity'].astype(str)
+    selling_price_dict = selling_prices_df.set_index(['server_generation', 'latency_sensitivity'])['selling_price'].to_dict()
+
+# Load the data at the module level
+load_global_data()
 
 @dataclass
 class ServerMoveInfo:
@@ -42,7 +69,6 @@ class ServerInfo:
     # 需要传入的属性
     server_id: str                       # 服务器ID
     dismiss_time: int                    # 下线时间，最小为1，最大为TIME_STEPS
-    datacenter_id: str                   # 购买时机房ID
     move_info: List[ServerMoveInfo]      # 服务器购买和迁移信息列表
     quantity: int                        # 服务器数量
     server_generation: str               # 服务器代次
@@ -54,6 +80,46 @@ class ServerInfo:
     life_expectancy: int = None          # 最大寿命
     cost_of_moving: float = None         # 迁移成本
     average_maintenance_fee: float = None  # 平均维护费用
+
+    def __post_init__(self):
+        # 填充服务器信息
+        server_info = server_info_dict.get(self.server_generation)
+        if server_info is None:
+            raise ValueError(f"服务器代次 {self.server_generation} 未找到。")
+        self.purchase_price = server_info['purchase_price']
+        self.slots_size = server_info['slots_size']
+        self.energy_consumption = server_info['energy_consumption']
+        self.capacity = server_info['capacity']
+        self.life_expectancy = server_info['life_expectancy']
+        self.cost_of_moving = server_info['cost_of_moving']
+        self.average_maintenance_fee = server_info['average_maintenance_fee']
+
+        # 处理购买和移动信息
+        for move in self.move_info:
+            datacenter_id = move.target_datacenter
+            datacenter_info = datacenter_info_dict.get(datacenter_id)
+            if datacenter_info is None:
+                raise ValueError(f"数据中心 {datacenter_id} 未找到。")
+
+            move.cost_of_energy = datacenter_info['cost_of_energy']
+            latency_sensitivity_str = datacenter_info['latency_sensitivity']
+            if latency_sensitivity_str not in LATENCY_SENSITIVITY_MAP:
+                raise ValueError(f"未知的时延敏感性: {latency_sensitivity_str}")
+            move.latency_sensitivity = LATENCY_SENSITIVITY_MAP[latency_sensitivity_str]
+
+            # 查找售价
+            key = (self.server_generation, latency_sensitivity_str)
+            selling_price = selling_price_dict.get(key)
+            if selling_price is None:
+                raise ValueError(f"售价未找到，服务器代次：{self.server_generation}，时延敏感性：{latency_sensitivity_str}")
+            move.selling_price = selling_price
+
+        # dismiss 时间不得超过最大寿命
+        if self.move_info:
+            first_move_time = self.move_info[0].time_step
+            max_dismiss_time = first_move_time + self.life_expectancy
+            if max_dismiss_time < self.dismiss_time:
+                self.dismiss_time = max_dismiss_time
 
 @dataclass
 class DiffBlackboard:
@@ -73,7 +139,7 @@ class DiffSolution:
     def __init__(self, seed, verbose=False):
         # 加载数据
         self._load_data()
-        
+
         self._init_price_matrix()
         # 初始化一个空解
         self.server_map: Dict[str, ServerInfo] = {}
@@ -85,16 +151,18 @@ class DiffSolution:
         self.__satisfaction_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
         # 初始化每一个时间步骤的服务器寿命
         self.__lifespan = np.zeros(TIME_STEPS, dtype=float)
+        # 初始化每一个时间步骤的寿命百分比总和
+        self.__lifespan_percentage_sum = np.zeros(TIME_STEPS, dtype=float)
         # 初始化每一个时间步骤的服务器数量
         self.__fleetsize = np.zeros(TIME_STEPS, dtype=float)
-        # 初始化平均寿命
+        # 初始化平均寿命百分比
         self.__average_lifespan = np.zeros(TIME_STEPS, dtype=float)
         # 初始化每一个时间步骤的成本
         self.__cost = np.zeros(TIME_STEPS, dtype=float)
         # 差分黑板，用于暂存变动
         self.__blackboard: DiffBlackboard = None
         # 当前的差分信息
-        self.__diff_info: ServerInfo = None
+        # self.__diff_info: ServerInfo = None
         # 初始化利用率矩阵
         self.__utilization_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
         # 初始化平均利用率
@@ -102,6 +170,9 @@ class DiffSolution:
 
         self._load_demand_data('./data/demand.csv', seed)
         self.verbose = verbose
+
+        self.__cost_details = {t: {'purchase_cost': 0, 'energy_cost': 0, 'maintenance_cost': 0} for t in range(TIME_STEPS)}
+        self.__capacity_combinations = {t: {} for t in range(TIME_STEPS)}
 
     def __print(self, message):
         """
@@ -176,44 +247,12 @@ class DiffSolution:
         # 建立 (server_generation, latency_sensitivity) 的售价字典
         self.__selling_price_dict = self.__selling_prices_df.set_index(['server_generation', 'latency_sensitivity'])['selling_price'].to_dict()
 
-    def set_server_diff(self, diff_info: ServerInfo):
+    def discard_server_changes(self):
         """
-        对解进行服务器变动的操作，填充必要的信息。
+        放弃当前对服务器的变动操作。
         """
-        server_gen = diff_info.server_generation
-        server_info = self.__server_info_dict.get(server_gen)
-        if server_info is None:
-            raise ValueError(f"服务器代次 {server_gen} 未找到。")
-        # 填充服务器信息
-        diff_info.purchase_price = server_info['purchase_price']
-        diff_info.slots_size = server_info['slots_size']
-        diff_info.energy_consumption = server_info['energy_consumption']
-        diff_info.capacity = server_info['capacity']
-        diff_info.life_expectancy = server_info['life_expectancy']
-        diff_info.cost_of_moving = server_info['cost_of_moving']
-        diff_info.average_maintenance_fee = server_info['average_maintenance_fee']
-        # 处理购买和移动信息
-        for move in diff_info.move_info:
-            datacenter_id = move.target_datacenter
-            datacenter_info = self.__datacenter_info_dict.get(datacenter_id)
-            if datacenter_info is None:
-                raise ValueError(f"数据中心 {datacenter_id} 未找到。")
-
-            move.cost_of_energy = datacenter_info['cost_of_energy']
-            latency_sensitivity_str = datacenter_info['latency_sensitivity']
-            move.latency_sensitivity = LATENCY_SENSITIVITY_MAP[latency_sensitivity_str]
-
-            # 查找售价
-            key = (server_gen, latency_sensitivity_str)
-            selling_price = self.__selling_price_dict.get(key)
-            if selling_price is None:
-                raise ValueError(f"售价未找到，服务器代次：{server_gen}，时延敏感性：{latency_sensitivity_str}")
-            move.selling_price = selling_price
-        # dismiss 时间不得超过最大寿命
-        if diff_info.move_info[0].time_step + diff_info.life_expectancy < diff_info.dismiss_time:
-            diff_info.dismiss_time = diff_info.move_info[0].time_step + diff_info.life_expectancy
-
-        self.__diff_info = diff_info
+        self.__diff_info = None
+        self.__blackboard = None
 
     def commit_server_changes(self):
         """
@@ -221,6 +260,7 @@ class DiffSolution:
         """
         # 将 blackboard 中的数据正式写入到解的内部状态
         self.__lifespan = self.__blackboard.lifespan
+        self.__lifespan_percentage_sum = self.__blackboard.lifespan_percentage_sum
         self.__fleetsize = self.__blackboard.fleetsize
         self.__capacity_matrix = self.__blackboard.capacity_matrix
         self.__cost = self.__blackboard.cost
@@ -241,11 +281,40 @@ class DiffSolution:
         self.__diff_info = None
         self.__blackboard = None
 
+    def apply_server_change(self, diff_info: ServerInfo):
+        if self.__blackboard is None:
+            # Initialize blackboard
+            self.__blackboard = DiffBlackboard(
+                lifespan=self.__lifespan.copy(),
+                lifespan_percentage_sum=self.__lifespan_percentage_sum.copy(),
+                fleetsize=self.__fleetsize.copy(),
+                capacity_matrix=self.__capacity_matrix.copy(),
+                cost=self.__cost.copy(),
+                satisfaction_matrix=self.__satisfaction_matrix.copy(),
+                changed_capacity_indices=set(),
+                utilization_matrix=self.__utilization_matrix.copy(),
+                average_utilization=self.__average_utilization.copy(),
+                average_lifespan=self.__average_lifespan.copy(),
+                changed_time_steps=set()
+            )
+        self.__diff_info = diff_info
+        blackboard = self.__blackboard
+        original_server_info = self.server_map.get(diff_info.server_id)
+
+        # Reverse changes for original server if it exists
+        if original_server_info is not None:
+            self._apply_change(blackboard, original_server_info, sign=-1)
+
+        # Apply new server changes
+        if diff_info.quantity > 0:
+            self._apply_change(blackboard, diff_info, sign=1)
+
+
     def _apply_change(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign=1):
         """
         应用指定的差分信息，更新黑板数据，不修改解的内部状态。
         """
-        # 调整时间步骤寿命
+        # 调整时间步骤寿命和寿命百分比总和
         self._update_lifespan(blackboard, diff_info, sign=sign)
         # 调整时间步骤服务器数量
         self._update_fleet_size(blackboard, diff_info, sign=sign)
@@ -262,11 +331,12 @@ class DiffSolution:
 
     def _update_lifespan(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign=1):
         """
-        更新服务器寿命。
+        更新服务器寿命和寿命百分比总和。
         """
         time_start = diff_info.move_info[0].time_step
         time_end = diff_info.dismiss_time
         lifespan_data = blackboard.lifespan
+        lifespan_percentage_sum = blackboard.lifespan_percentage_sum
 
         # 确保时间范围在数组索引范围内
         time_start = max(0, time_start)
@@ -276,15 +346,17 @@ class DiffSolution:
             # 计算寿命增量
             lifespan_steps = np.arange(1, time_end - time_start + 1, dtype=float)
             increments = lifespan_steps * diff_info.quantity * sign
-
             # 更新寿命数据
             lifespan_data[time_start:time_end] += increments
-
+            # 计算寿命百分比增量
+            life_expectancy = diff_info.life_expectancy
+            lifespan_percentages = (lifespan_steps / life_expectancy) * diff_info.quantity * sign
+            # 更新寿命百分比总和
+            lifespan_percentage_sum[time_start:time_end] += lifespan_percentages
             # 记录受影响的时间步骤
             blackboard.changed_time_steps.update(range(time_start, time_end))
         else:
             raise ValueError("结束时间必须大于开始时间。")
-
 
     def _update_fleet_size(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign=1):
         """
@@ -301,7 +373,7 @@ class DiffSolution:
 
         # 更新服务器数量
         fleet_size[time_start:time_end] += diff_info.quantity * sign
-        
+
         # 记录受影响的时间步骤
         blackboard.changed_time_steps.update(range(time_start, time_end))
 
@@ -314,6 +386,8 @@ class DiffSolution:
         purchase_cost = diff_info.purchase_price * diff_info.quantity * sign
         if 0 <= purchase_time < TIME_STEPS:
             cost_array[purchase_time] += purchase_cost
+            if self.verbose:
+                self.__cost_details[purchase_time]['purchase_cost'] += purchase_cost
 
     def _update_moving_cost(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign: int):
         """
@@ -325,6 +399,7 @@ class DiffSolution:
             moving_cost = diff_info.cost_of_moving * diff_info.quantity * sign
             if 0 <= move_time < TIME_STEPS:
                 cost_array[move_time] += moving_cost
+            print(f"迁移费用 (时间步 {move_time}): {moving_cost}")
 
     def _update_energy_cost(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign: int):
         """
@@ -353,6 +428,9 @@ class DiffSolution:
             # 更新成本数组
             if time_start_energy < time_end_energy:
                 cost_array[time_start_energy:time_end_energy] += energy_cost_per_time_step
+                if self.verbose:
+                    for t in range(time_start_energy, time_end_energy):
+                                    self.__cost_details[t]['energy_cost'] += energy_cost_per_time_step
 
     def _update_maintenance_cost(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign: int):
         """
@@ -384,6 +462,10 @@ class DiffSolution:
 
         # 更新成本数组
         cost_array[time_start:time_end] += maintenance_cost_per_time_step
+
+        if self.verbose:
+            for t in range(time_start, time_end):
+                self.__cost_details[t]['maintenance_cost'] += maintenance_cost_per_time_step[t - time_start]
 
     def _recalculate_satisfaction(self, blackboard: DiffBlackboard):
         """
@@ -421,24 +503,8 @@ class DiffSolution:
         # 更新 blackboard 的 utilization_matrix
         blackboard.utilization_matrix[time_steps, latency_idxs, server_generation_idxs] = utilization_values
 
-        # 可以添加日志来检查利用率
-        print(f"Time steps affected: {time_steps}")
-        print(f"  Utilization values: {utilization_values}")
-
-
     def _adjust_capacity_by_failure_rate_approx(self, x, avg_failure_rate=FAILURE_RATE):
-        """
-        近似调整容量以考虑故障率。
-        """
         return x * (1 - avg_failure_rate)
-    
-    def _check_negative_capacity(self, capacity_matrix, time_start, time_end, latency_sensitivity, server_generation_idx):
-        """
-        检查指定索引范围的容量是否为负，如果是，则抛出错误。
-        """
-        sub_matrix = capacity_matrix[time_start:time_end, latency_sensitivity, server_generation_idx]
-        if (sub_matrix < 0).any():
-            raise ValueError("容量矩阵中存在负值，更新操作无效。")
 
     def _update_capacity(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign=1):
         """
@@ -469,17 +535,15 @@ class DiffSolution:
             # 记录容量变化的索引
             for t in range(time_start, time_end):
                 blackboard.changed_capacity_indices.add((t, latency_sensitivity, server_generation_idx))
-        
-        self._check_negative_capacity(capacity_matrix, time_start, time_end, latency_sensitivity, server_generation_idx)
 
     def _calculate_average_utilization(self, blackboard: DiffBlackboard):
         utilization_matrix = blackboard.utilization_matrix
         changed_indices = list(blackboard.changed_capacity_indices)
-        
+
         if not changed_indices:
             # 如果没有变化，直接返回之前计算的平均利用率
             return blackboard.average_utilization
-        
+
         # 将索引列表转换为数组
         changed_indices = np.array(changed_indices)
         time_steps = changed_indices[:, 0]
@@ -493,63 +557,28 @@ class DiffSolution:
             valid_counts_t = np.sum(valid_capacity_mask_t)
             utilization_sums_t = np.sum(utilization_matrix[t])
 
-            # 日志输出，检查有效容量掩码和有效服务器数量
-            print(f"Time step {t}:")
-            print(f"  Valid capacity mask: {valid_capacity_mask_t}")
-            print(f"  Valid counts (valid server count): {valid_counts_t}")
-            print(f"  Utilization sums: {utilization_sums_t}")
-
             if valid_counts_t > 0:
                 blackboard.average_utilization[t] = utilization_sums_t / valid_counts_t
             else:
                 blackboard.average_utilization[t] = 0.0
 
-            # 输出计算结果
-            print(f"  Average utilization for time step {t}: {blackboard.average_utilization[t]}\n")
-
         return blackboard.average_utilization
 
-
-    
     def _calculate_average_lifespan(self, blackboard: DiffBlackboard):
-        lifespan = blackboard.lifespan
+        lifespan_percentage_sum = blackboard.lifespan_percentage_sum
         fleetsize = blackboard.fleetsize
         changed_time_steps = np.array(list(blackboard.changed_time_steps))
 
         if len(changed_time_steps) == 0:
             return blackboard.average_lifespan
 
-        # 初始化数组
-        total_lifespan_percentages = np.zeros(TIME_STEPS)
-        total_quantities = np.zeros(TIME_STEPS)
-
-        # 遍历所有服务器，计算它们在每个时间步的寿命比例和数量
-        for server_info in self.server_map.values():
-            life_expectancy = server_info.life_expectancy
-            quantity = server_info.quantity
-
-            # 获取服务器的启动时间和下线时间
-            time_start = server_info.move_info[0].time_step
-            time_end = server_info.dismiss_time
-
-            # 创建服务器的活动时间范围
-            server_time_steps = np.arange(time_start, time_end)
-            # 计算当前寿命（第一个时间步寿命为1）
-            current_lifespans = server_time_steps - time_start + 1
-            # 计算寿命比例
-            lifespan_percentages = current_lifespans / life_expectancy
-            # 将寿命比例乘以服务器数量，累加到总寿命比例数组中
-            total_lifespan_percentages[time_start:time_end] += lifespan_percentages * quantity
-            # 累加服务器数量
-            total_quantities[time_start:time_end] += quantity
-
-        # 计算平均寿命比例，避免除以零
+        # 计算平均寿命百分比，避免除以零
         with np.errstate(divide='ignore', invalid='ignore'):
             average_lifespan = np.divide(
-                total_lifespan_percentages,
-                total_quantities,
-                out=np.zeros_like(total_lifespan_percentages),
-                where=total_quantities != 0
+                lifespan_percentage_sum,
+                fleetsize,
+                out=np.zeros_like(lifespan_percentage_sum),
+                where=fleetsize != 0
             )
 
         # 只更新受影响的时间步
@@ -557,8 +586,6 @@ class DiffSolution:
 
         return blackboard.average_lifespan
 
-
-    
     def _calculate_revenue(self, blackboard: DiffBlackboard):
         revenue = np.sum(blackboard.satisfaction_matrix * self.__price_matrix, axis=(1, 2))
         return revenue  # 返回每个时间步的收入
@@ -570,10 +597,10 @@ class DiffSolution:
         """
         # 先计算收入
         revenue = self._calculate_revenue(blackboard)
-        
+
         # 利润 = 收入 - 成本
         profit = revenue - blackboard.cost
-        
+
         return profit  # 返回每个时间步的利润
 
     def _final_calculation(self, blackboard: DiffBlackboard):
@@ -583,86 +610,45 @@ class DiffSolution:
         """
         # 计算每个时间步的平均利用率
         average_utilization = self._calculate_average_utilization(blackboard)
-        
-        # 计算每个时间步的平均寿命
+
+        # 计算每个时间步的平均寿命百分比
         average_lifespan = self._calculate_average_lifespan(blackboard)
-        
+
         # 计算每个时间步的利润
         profit = self._calculate_profit(blackboard)
-        
+
         # 计算每个时间步的乘积： 平均利用率 * 平均寿命 * 利润
         stepwise_product = average_utilization * average_lifespan * profit
-        
+
         # 计算所有时间步乘积的总和
         evaluation_result = np.sum(stepwise_product)
 
         if self.verbose:
+            self.__print("\n\n\nEvaluation Result:")
             for t in range(TIME_STEPS):
-                print({
+                self.__print({
                     'time-step': t + 1,
                     'U': round(average_utilization[t], 2),
                     'L': round(average_lifespan[t], 2),
                     'P': round(profit[t], 2),
                     'Size': int(blackboard.fleetsize[t]),
+                    '购买费用': round(self.__cost_details[t]['purchase_cost'], 2),
+                    '能耗费用': round(self.__cost_details[t]['energy_cost'], 2),
+                    '维护费用': round(self.__cost_details[t]['maintenance_cost'], 2),
+                    '总费用': round(blackboard.cost[t], 2),
+                    '总收入': round(self._calculate_revenue(blackboard)[t], 2),
                 })
-        
+                self.__print(f"Time Step {t + 1} - Capacity Combinations: {self.__capacity_combinations[t]}")
         return evaluation_result
-
+    
     def diff_evaluation(self):
         """
-        找到当前解中需要变动的服务器ID
-        如果当前解中存在该服务器
-            移除对应时间步骤的总寿命
-            移除对应时间步骤的服务器总数量
-            移除对应时间步骤的对应时延-代数服务器容量
-            在成本中，移除对应步骤的购买成本 移动成本 维护成本
-
-        针对重新设置的该服务器参数
-            增加对应时间步骤的总寿命
-            增加对应时间步骤的服务器总数量
-            增加对应时间步骤的时延-代数服务器容量
-            在成本中，增加对应步骤的购买成本 移动成本 维护成本
-
-        更新所有时间步骤 受到影响的（特定时间步骤，特定服务器代数，特定时延敏感）每步骤 满足量
-        更新所有步骤 受到影响的 服务器组合数量
-        
-        更新所有步骤的 对应 时延-代数的利润
-
-        计算每步平均寿命
-        计算每步骤利用率
-        计算每步骤总利润
+        差分评估函数
         """
-        new_diff_info = self.__diff_info
-        original_server_info = self.server_map.get(new_diff_info.server_id)
+        if self.__blackboard is None:
+            raise Exception("No blackboard data. Apply server changes before evaluation.")
+        # Recalculate satisfaction
+        self._recalculate_satisfaction(self.__blackboard)
 
-        # 初始化黑板
-        blackboard = DiffBlackboard(
-            lifespan=self.__lifespan.copy(),
-            fleetsize=self.__fleetsize.copy(),
-            capacity_matrix=self.__capacity_matrix.copy(),
-            cost=self.__cost.copy(),
-            satisfaction_matrix=self.__satisfaction_matrix.copy(),
-            changed_capacity_indices=set(),
-            utilization_matrix=self.__utilization_matrix.copy(),
-            average_utilization=self.__average_utilization.copy(),
-            average_lifespan=self.__average_lifespan.copy(),
-            changed_time_steps=set()
-        )
-
-        # 逆转旧的服务器影响（如果存在）
-        if original_server_info is not None:
-            self._apply_change(blackboard, original_server_info, sign=-1)
-
-        # 应用新的服务器变动
-        if new_diff_info.quantity > 0:
-            self._apply_change(blackboard, new_diff_info, sign=1)
-
-        # 重新计算需求满足数组
-        self._recalculate_satisfaction(blackboard)
-
-        # 执行最终计算，得到评估结果
-        evaluation_result = self._final_calculation(blackboard)
-
-        # 保存黑板
-        self.__blackboard = blackboard
+        evaluation_result = self._final_calculation(self.__blackboard)
         return evaluation_result
