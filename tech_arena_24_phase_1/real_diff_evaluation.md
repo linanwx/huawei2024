@@ -20,7 +20,7 @@ solution = DiffSolution(seed, verbose=True)
 要表示一个服务器，你需要创建 `ServerInfo` 和 `ServerMoveInfo` 实例。`ServerMoveInfo` 实例表示服务器在特定时间步迁移到不同数据中心的情况。
 
 ```python
-move_info = [
+buy_and_move_info = [
     ServerMoveInfo(time_step=0, target_datacenter='DC1'),  # 购买到数据中心 DC1
     ServerMoveInfo(time_step=10, target_datacenter='DC2')  # 10 时间步后迁移到 DC2
 ]
@@ -28,7 +28,7 @@ move_info = [
 server_info = ServerInfo(
     server_id="S1",  # 服务器 ID
     dismiss_time=100,  # 服务器下线时间
-    move_info=move_info,  # 移动信息列表
+    buy_and_move_info=buy_and_move_info,  # 移动信息列表
     quantity=10,  # 服务器数量
     server_generation="CPU.S1"  # 服务器代次
 )
@@ -85,7 +85,7 @@ seed = 42
 solution = DiffSolution(seed, verbose=True)
 
 # 第二步：创建服务器移动信息
-move_info = [
+buy_and_move_info = [
     ServerMoveInfo(time_step=0, target_datacenter='DC1'),
     ServerMoveInfo(time_step=10, target_datacenter='DC2')
 ]
@@ -94,7 +94,7 @@ move_info = [
 server_info = ServerInfo(
     server_id="S1",
     dismiss_time=100,
-    move_info=move_info,
+    buy_and_move_info=buy_and_move_info,
     quantity=10,
     server_generation="CPU.S1"
 )
