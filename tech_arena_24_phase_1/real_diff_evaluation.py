@@ -97,23 +97,7 @@ class ServerInfo:
 
         # 处理购买和移动信息
         for move in self.buy_and_move_info:
-            datacenter_id = move.target_datacenter
-            datacenter_info = datacenter_info_dict.get(datacenter_id)
-            if datacenter_info is None:
-                raise ValueError(f"数据中心 {datacenter_id} 未找到。")
-
-            move.cost_of_energy = datacenter_info['cost_of_energy']
-            latency_sensitivity_str = datacenter_info['latency_sensitivity']
-            if latency_sensitivity_str not in LATENCY_SENSITIVITY_MAP:
-                raise ValueError(f"未知的时延敏感性: {latency_sensitivity_str}")
-            move.latency_sensitivity = LATENCY_SENSITIVITY_MAP[latency_sensitivity_str]
-
-            # 查找售价
-            key = (self.server_generation, latency_sensitivity_str)
-            selling_price = selling_price_dict.get(key)
-            if selling_price is None:
-                raise ValueError(f"售价未找到，服务器代次：{self.server_generation}，时延敏感性：{latency_sensitivity_str}")
-            move.selling_price = selling_price
+          self.process_move_info(move)
 
         # dismiss 时间不得超过最大寿命
         if self.buy_and_move_info:
@@ -121,6 +105,25 @@ class ServerInfo:
             max_dismiss_time = first_move_time + self.life_expectancy
             if max_dismiss_time < self.dismiss_time:
                 self.dismiss_time = max_dismiss_time
+
+    def process_move_info(self, move: ServerMoveInfo):
+          datacenter_id = move.target_datacenter
+          datacenter_info = datacenter_info_dict.get(datacenter_id)
+          if datacenter_info is None:
+              raise ValueError(f"数据中心 {datacenter_id} 未找到。")
+
+          move.cost_of_energy = datacenter_info['cost_of_energy']
+          latency_sensitivity_str = datacenter_info['latency_sensitivity']
+          if latency_sensitivity_str not in LATENCY_SENSITIVITY_MAP:
+              raise ValueError(f"未知的时延敏感性: {latency_sensitivity_str}")
+          move.latency_sensitivity = LATENCY_SENSITIVITY_MAP[latency_sensitivity_str]
+
+          # 查找售价
+          key = (self.server_generation, latency_sensitivity_str)
+          selling_price = selling_price_dict.get(key)
+          if selling_price is None:
+              raise ValueError(f"售价未找到，服务器代次：{self.server_generation}，时延敏感性：{latency_sensitivity_str}")
+          move.selling_price = selling_price
 
 @dataclass
 class DiffBlackboard:
@@ -391,7 +394,7 @@ class DiffSolution:
             moving_cost = diff_info.cost_of_moving * diff_info.quantity * sign
             if 0 <= move_time < TIME_STEPS:
                 cost_array[move_time] += moving_cost
-            print(f"迁移费用 (时间步 {move_time}): {moving_cost}")
+            # print(f"迁移费用 (时间步 {move_time}): {moving_cost}")
 
     def _update_energy_cost(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign: int):
         """
@@ -522,6 +525,9 @@ class DiffSolution:
             latency_sensitivity = current_move.latency_sensitivity
 
             # 更新容量矩阵
+            if latency_sensitivity is None:
+              print(current_move)
+              print(time_start, time_end, latency_sensitivity, server_generation_idx)
             capacity_matrix[time_start:time_end, latency_sensitivity, server_generation_idx] += capacity
 
             # 记录容量变化的索引
