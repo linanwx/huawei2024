@@ -17,9 +17,11 @@ from collections import defaultdict
 from utils import load_problem_data
 from evaluation import evaluation_function
 # from evaluation_diff import DiffInput, DiffSolution
+from real_diff_evaluation import DiffSolution, ServerInfo, ServerMoveInfo
 
 demand, datacenters, servers, selling_prices = load_problem_data()
 MAX_TIMESTEPS = 168
+random_seed = 6053
 
 import numpy as np
 
@@ -93,8 +95,9 @@ class ServerEnv(gym.Env):
 
         # 成本计算
         self.total_cost = 0
-        # self.S = DiffSolution(seed=6053)
+        self.S = DiffSolution(seed=random_seed)
         self.slot_manager = SlotAvailabilityManager(datacenters)
+        self.servers_map: dict[int, ServerInfo] = {}
 
         num_base_actions = self.state_space.num_server_types * self.state_space.num_data_centers
         num_actions = num_base_actions * self.actions_per_combination
@@ -154,7 +157,7 @@ class ServerEnv(gym.Env):
             data_center_idx = i // self.state_space.num_server_types
             server_type_idx = i % self.state_space.num_server_types
 
-            if self.current_step == 0:
+            if self.current_step == 1:
                 # 在第一轮只允许购买服务器
                 if operation == 0:  # 购买服务器
                     self._buy_server(data_center_idx, server_type_idx, intensity)
@@ -193,6 +196,7 @@ class ServerEnv(gym.Env):
         super().reset(seed=seed)
         self.current_step = 1
         # self.S = DiffSolution(seed=seed)
+        self.S = DiffSolution(seed=random_seed)
         self.state_space = ServerStateSpace()
         self.solution = pd.DataFrame(columns=['time_step', 'datacenter_id',
                                               'server_generation', 'server_id', 'action'])
@@ -227,6 +231,17 @@ class ServerEnv(gym.Env):
               new_server = (self.next_server_id, server_type_idx, self.current_step, self.current_step)
               self.state_space.servers[data_center_idx].append(new_server)
               self.next_server_id += 1
+              move_info = ServerMoveInfo(time_step=self.current_step - 1,
+                                         target_datacenter=self.state_space.data_center_id[data_center_idx])
+              server_info = ServerInfo(
+                  server_id=new_server[0],
+                  quantity=1,
+                  buy_and_move_info=[move_info],
+                  dismiss_time=168,
+                  server_generation=self.server_generation[new_server[1]]
+              )
+              self.servers_map[server_info.server_id] = server_info
+              self.S.apply_server_change(server_info)
               self.solution.loc[len(self.solution)] = [
                   self.current_step,
                   self.state_space.data_center_id[data_center_idx],
@@ -255,6 +270,9 @@ class ServerEnv(gym.Env):
                     removed_server = servers.pop(i)
                     self.slot_manager.update_slots(removed_server[2], removed_server[2] + life_expectancy, data_center_idx, server_type_idx, -1)
                     # self.total_cost += self._calculate_dismissal_cost(removed_server)
+                    server_info = self.servers_map[removed_server[0]]
+                    server_info.dismiss_time = self.current_step - 1
+                    self.S.apply_server_change(server_info)
                     self.solution.loc[len(self.solution)] = [
                       self.current_step,
                       self.state_space.data_center_id[data_center_idx],
@@ -288,9 +306,16 @@ class ServerEnv(gym.Env):
                     self.slot_manager.update_slots(moved_server[2], moved_server[2] + life_expectancy, from_dc, server_type_idx, -1)
 
                     self.state_space.servers[to_dc].append(updated_server)
+                    datacenter = self.state_space.data_center_id[to_dc]
+                    server_info = self.servers_map[updated_server[0]]
+
+                    move_info = ServerMoveInfo(time_step=self.current_step - 1, target_datacenter=datacenter)
+                    server_info.process_move_info(move_info)
+                    server_info.buy_and_move_info.append(move_info)
+                    self.S.apply_server_change(server_info)
                     self.solution.loc[len(self.solution)] = [
                       self.current_step,
-                      self.state_space.data_center_id[to_dc],
+                      datacenter,
                       self.server_generation[updated_server[1]],
                       updated_server[0],
                       "move"
@@ -299,12 +324,13 @@ class ServerEnv(gym.Env):
                       break
 
     def _calculate_reward(self):
-        reward = evaluation_function(self.solution,
-                    demand,
-                    datacenters,
-                    servers,
-                    selling_prices,
-                    seed=6053)
+        # reward = evaluation_function(self.solution,
+        #             demand,
+        #             datacenters,
+        #             servers,
+        #             selling_prices,
+        #             seed=6053)
+        reward = self.S.diff_evaluation()
         if reward is None:
             return -100
         # input:DiffInput = DiffInput(is_new=True, step=1, diff_solution=self.solution)
