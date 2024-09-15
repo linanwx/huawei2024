@@ -70,7 +70,7 @@ class ServerInfo:
     # 需要传入的属性
     server_id: str                       # 服务器ID
     dismiss_time: int                    # 下线时间，最小为1，最大为TIME_STEPS
-    move_info: List[ServerMoveInfo]      # 服务器购买和迁移信息列表
+    buy_and_move_info: List[ServerMoveInfo]      # 服务器购买和迁移信息列表
     quantity: int                        # 服务器数量
     server_generation: str               # 服务器代次
     # 其他联查属性，不需要传入
@@ -96,7 +96,7 @@ class ServerInfo:
         self.average_maintenance_fee = server_info['average_maintenance_fee']
 
         # 处理购买和移动信息
-        for move in self.move_info:
+        for move in self.buy_and_move_info:
             datacenter_id = move.target_datacenter
             datacenter_info = datacenter_info_dict.get(datacenter_id)
             if datacenter_info is None:
@@ -116,8 +116,8 @@ class ServerInfo:
             move.selling_price = selling_price
 
         # dismiss 时间不得超过最大寿命
-        if self.move_info:
-            first_move_time = self.move_info[0].time_step
+        if self.buy_and_move_info:
+            first_move_time = self.buy_and_move_info[0].time_step
             max_dismiss_time = first_move_time + self.life_expectancy
             if max_dismiss_time < self.dismiss_time:
                 self.dismiss_time = max_dismiss_time
@@ -182,10 +182,6 @@ class DiffSolution:
         return copy.deepcopy(server_info)
         
     def __print(self, message):
-        """
-        根据verbose的值决定是否打印消息。
-        :param message: 要打印的消息。
-        """
         if self.__verbose:
             print(message)
 
@@ -329,7 +325,7 @@ class DiffSolution:
         """
         更新服务器寿命和寿命百分比总和。
         """
-        time_start = diff_info.move_info[0].time_step
+        time_start = diff_info.buy_and_move_info[0].time_step
         time_end = diff_info.dismiss_time
         lifespan_data = blackboard.lifespan
         lifespan_percentage_sum = blackboard.lifespan_percentage_sum
@@ -358,7 +354,7 @@ class DiffSolution:
         """
         更新服务器数量。
         """
-        time_start = diff_info.move_info[0].time_step
+        time_start = diff_info.buy_and_move_info[0].time_step
         time_end = diff_info.dismiss_time
 
         fleet_size = blackboard.fleetsize
@@ -378,7 +374,7 @@ class DiffSolution:
         更新购买成本。
         """
         cost_array = blackboard.cost
-        purchase_time = diff_info.move_info[0].time_step
+        purchase_time = diff_info.buy_and_move_info[0].time_step
         purchase_cost = diff_info.purchase_price * diff_info.quantity * sign
         if 0 <= purchase_time < TIME_STEPS:
             cost_array[purchase_time] += purchase_cost
@@ -390,7 +386,7 @@ class DiffSolution:
         更新迁移成本。
         """
         cost_array = blackboard.cost
-        for move_info in diff_info.move_info[1:]:  # 跳过第一个购买信息
+        for move_info in diff_info.buy_and_move_info[1:]:  # 跳过第一个购买信息
             move_time = move_info.time_step
             moving_cost = diff_info.cost_of_moving * diff_info.quantity * sign
             if 0 <= move_time < TIME_STEPS:
@@ -402,7 +398,7 @@ class DiffSolution:
         更新能耗成本。
         """
         cost_array = blackboard.cost
-        move_info_list = diff_info.move_info
+        move_info_list = diff_info.buy_and_move_info
         for i in range(len(move_info_list)):
             current_move = move_info_list[i]
             time_start_energy = current_move.time_step
@@ -433,7 +429,7 @@ class DiffSolution:
         更新维护成本。
         """
         cost_array = blackboard.cost
-        time_start = diff_info.move_info[0].time_step
+        time_start = diff_info.buy_and_move_info[0].time_step
         time_end = diff_info.dismiss_time
 
         # 确保时间索引在有效范围内
@@ -510,7 +506,7 @@ class DiffSolution:
         capacity = diff_info.capacity * diff_info.quantity
         capacity = self._adjust_capacity_by_failure_rate_approx(capacity) * sign
 
-        move_info_list = diff_info.move_info
+        move_info_list = diff_info.buy_and_move_info
         server_generation_idx = SERVER_GENERATION_MAP[diff_info.server_generation]
         for i in range(len(move_info_list)):
             current_move = move_info_list[i]
