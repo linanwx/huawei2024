@@ -1,18 +1,18 @@
 
 
-import logging
+# import logging
 import numpy as np
 import pandas as pd
 from scipy.stats import truncweibull_min
 
 
 # CREATE LOGGER
-logger = logging.getLogger()
-file_handler = logging.FileHandler('logs.log')
-logger.addHandler(file_handler)
+# logger = logging.getLogger()
+# file_handler = logging.FileHandler('logs.log')
+# logger.addHandler(file_handler)
 
-formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
-file_handler.setFormatter(formatter)
+# formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
+# file_handler.setFormatter(formatter)
 
 
 def get_known(key):
@@ -200,6 +200,8 @@ def get_capacity_by_server_generation_latency_sensitivity(fleet):
     Z = Z[cols]
     Z = Z.map(adjust_capacity_by_failure_rate, na_action='ignore')
     Z = Z.fillna(0, inplace=False)
+    # print("各服务器代次与时延敏感性的容量：")
+    # print(Z)
     return Z
 
 
@@ -208,10 +210,14 @@ def get_valid_columns(cols1, cols2):
     return list(set(cols1).intersection(set(cols2)))
 
 
-def adjust_capacity_by_failure_rate(x):
-    # HELPER FUNCTION TO CALCULATE THE FAILURE RATE f
-    return int(x * (1 - truncweibull_min.rvs(0.3, 0.05, 0.1, size=1).item()))
+# def adjust_capacity_by_failure_rate(x):
+#     # HELPER FUNCTION TO CALCULATE THE FAILURE RATE f
+#     return int(x * (1 - truncweibull_min.rvs(0.3, 0.05, 0.1, size=1).item()))
 
+def adjust_capacity_by_failure_rate(x):
+    # 使用期望值代替随机数
+    expected_value = 0.0726
+    return x * (1 - expected_value)
 
 def check_datacenter_slots_size_constraint(fleet):
     # CHECK DATACENTERS SLOTS SIZE CONSTRAINT
@@ -257,6 +263,10 @@ def get_profit(D, Z, selling_prices, fleet):
     # CALCULATE OBJECTIVE P = PROFIT
     R = get_revenue(D, Z, selling_prices)
     C = get_cost(fleet)
+        # 打印每一步的收入、成本及总利润
+    # print(f"总收入: {R}")
+    # print(f"总成本: {C}")
+    # print(f"利润: {R - C}")
     return R - C
 
 
@@ -296,11 +306,20 @@ def get_cost(fleet):
     cost = energy_cost + maintenance_cost
     
     # 添加购买价格（仅对寿命为1年的服务器）
-    cost += np.where(x == 1, fleet['purchase_price'], 0)
+    purchase_cost = np.where(x == 1, fleet['purchase_price'], 0)
+    cost += purchase_cost
     
     # 添加移动成本
-    cost += np.where(fleet['moved'] == 1, fleet['cost_of_moving'], 0)
+    move_cost = np.where(fleet['moved'] == 1, fleet['cost_of_moving'], 0)
+    cost += move_cost
     
+    # 打印每一步的详细费用信息
+    # print(f"购买费用: {purchase_cost.sum()}")
+    # print(f"维护费用: {maintenance_cost.sum()}")
+    # print(f"能源费用: {energy_cost.sum()}")
+    # print(f"移动费用: {move_cost.sum()}")
+    # print(f"总费用: {cost.sum()}")
+
     return cost.sum()
 
 
@@ -336,11 +355,13 @@ def update_fleet(ts, fleet, solution):
         fleet['moved'] = 0
     else:
         server_id_action = solution[['action', 'server_id']].groupby('action')['server_id'].apply(list).to_dict()
+        # print(f"当前操作：{server_id_action}")
         # BUY
         if 'buy' in server_id_action:
             fleet = pd.concat([fleet, solution[solution['action'] == 'buy']], axis=0)
         # MOVE
         if 'move' in server_id_action:
+            # print(f"迁移服务器：：{server_id_action['move']}")
             s = server_id_action['move']
             dc_fields = get_known('datacenter_fields')
             fleet.loc[s, dc_fields] = solution.loc[s, dc_fields]
@@ -413,10 +434,6 @@ def get_evaluation(solution,
         if FLEET.shape[0] > 0:
             # GET THE SERVERS CAPACITY AT TIMESTEP ts
             Zf = get_capacity_by_server_generation_latency_sensitivity(FLEET)
-
-            # if ts == 7:
-            #     print(Zf)
-            #     exit()
     
             # CHECK CONSTRAINTS
             check_datacenter_slots_size_constraint(FLEET)
@@ -505,16 +522,16 @@ def evaluation_function(solution,
     # SET RANDOM SEED
     np.random.seed(seed)
     # EVALUATE SOLUTION
-    try:
-        return get_evaluation(solution, 
-                              demand,
-                              datacenters,
-                              servers,
-                              selling_prices,
-                              time_steps=time_steps, 
-                              verbose=verbose)
+    # try:
+    return get_evaluation(solution, 
+                            demand,
+                            datacenters,
+                            servers,
+                            selling_prices,
+                            time_steps=time_steps, 
+                            verbose=verbose)
     # CATCH EXCEPTIONS
-    except Exception as e:
-        logger.error(e)
-        return None
+    # except Exception as e:
+        # logger.error(e)
+        # return None
 

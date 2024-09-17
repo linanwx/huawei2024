@@ -1,0 +1,30 @@
+[
+    {
+        "time_step": 1,
+        "datacenter_id": "DC1",
+        "server_generation": "CPU.S1",
+        "server_id": "1",
+        "action": "buy"
+    },
+    {
+        "time_step": 2,
+        "datacenter_id": "DC2",
+        "server_generation": "CPU.S2",
+        "server_id": "2",
+        "action": "buy"
+    },
+    {
+        "time_step": 18,
+        "datacenter_id": "DC2",
+        "server_generation": "CPU.S2",
+        "server_id": "2",
+        "action": "dismiss"
+    },
+    {
+        "time_step": 12,
+        "datacenter_id": "DC3",
+        "server_generation": "CPU.S2",
+        "server_id": "2",
+        "action": "move"
+    }
+]

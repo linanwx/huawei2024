@@ -130,6 +130,12 @@ def adjust_capacity_by_failure_rate(x):
     # HELPER FUNCTION TO CALCULATE THE FAILURE RATE f
     return int(x * (1 - truncweibull_min.rvs(0.3, 0.05, 0.1, size=1).item()))
 
+def adjust_capacity_by_failure_rate_expected(x, avg_failure_rate=0.0726):
+    """
+    直接使用期望值计算故障率，调整容量
+    """
+    return (x * (1 - avg_failure_rate))
+
 def adjust_capacity_by_failure_rate_numpy(x):
     # 使用 NumPy 矢量化操作来计算故障率
     failure_rate = truncweibull_min.rvs(0.3, 0.05, 0.1, size=x.shape)
@@ -139,7 +145,7 @@ def get_capacity_by_server_generation_latency_sensitivity_optimized(total_capaci
     Z = total_capacity_table.capacity_table.copy()
 
     # 使用原来的方式调整容量
-    Z = adjust_capacity_by_failure_rate_numpy(Z.values)
+    Z = adjust_capacity_by_failure_rate_expected(Z.values)
     return pd.DataFrame(Z, index=total_capacity_table.capacity_table.index, columns=total_capacity_table.capacity_table.columns)
 
 def get_revenue(D, Z, selling_prices):

@@ -31,7 +31,7 @@ def load_and_process_operations(file_path):
             server_info = ServerInfo(
                 server_id=server_id,
                 dismiss_time=168,  # 默认生命周期结束为168
-                move_info=[move_info],
+                buy_and_move_info=[move_info],
                 quantity=1,  # 假设每次购买的数量是1
                 server_generation=row['server_generation']
             )

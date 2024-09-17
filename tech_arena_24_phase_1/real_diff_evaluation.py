@@ -1,10 +1,10 @@
 import copy
+import json
 import numpy as np
 import pandas as pd
 from dataclasses import dataclass, field
 from typing import Dict, List
 from evaluation import get_actual_demand
-
 
 TIME_STEPS = 168  # 时间下标从0到167
 FAILURE_RATE = 0.0726  # 故障率
@@ -94,7 +94,9 @@ class ServerInfo:
         self.life_expectancy = server_info['life_expectancy']
         self.cost_of_moving = server_info['cost_of_moving']
         self.average_maintenance_fee = server_info['average_maintenance_fee']
+        self.init_buy_and_move_info()
 
+    def init_buy_and_move_info(self):
         # 处理购买和移动信息
         for move in self.buy_and_move_info:
           self.process_move_info(move)
@@ -107,23 +109,23 @@ class ServerInfo:
                 self.dismiss_time = max_dismiss_time
 
     def process_move_info(self, move: ServerMoveInfo):
-          datacenter_id = move.target_datacenter
-          datacenter_info = datacenter_info_dict.get(datacenter_id)
-          if datacenter_info is None:
-              raise ValueError(f"数据中心 {datacenter_id} 未找到。")
+        datacenter_id = move.target_datacenter
+        datacenter_info = datacenter_info_dict.get(datacenter_id)
+        if datacenter_info is None:
+            raise ValueError(f"数据中心 {datacenter_id} 未找到。")
 
-          move.cost_of_energy = datacenter_info['cost_of_energy']
-          latency_sensitivity_str = datacenter_info['latency_sensitivity']
-          if latency_sensitivity_str not in LATENCY_SENSITIVITY_MAP:
-              raise ValueError(f"未知的时延敏感性: {latency_sensitivity_str}")
-          move.latency_sensitivity = LATENCY_SENSITIVITY_MAP[latency_sensitivity_str]
+        move.cost_of_energy = datacenter_info['cost_of_energy']
+        latency_sensitivity_str = datacenter_info['latency_sensitivity']
+        if latency_sensitivity_str not in LATENCY_SENSITIVITY_MAP:
+            raise ValueError(f"未知的时延敏感性: {latency_sensitivity_str}")
+        move.latency_sensitivity = LATENCY_SENSITIVITY_MAP[latency_sensitivity_str]
 
-          # 查找售价
-          key = (self.server_generation, latency_sensitivity_str)
-          selling_price = selling_price_dict.get(key)
-          if selling_price is None:
-              raise ValueError(f"售价未找到，服务器代次：{self.server_generation}，时延敏感性：{latency_sensitivity_str}")
-          move.selling_price = selling_price
+        # 查找售价
+        key = (self.server_generation, latency_sensitivity_str)
+        selling_price = selling_price_dict.get(key)
+        if selling_price is None:
+            raise ValueError(f"售价未找到，服务器代次：{self.server_generation}，时延敏感性：{latency_sensitivity_str}")
+        move.selling_price = selling_price
 
 @dataclass
 class DiffBlackboard:
@@ -278,6 +280,8 @@ class DiffSolution:
         self.__blackboard = None
 
     def apply_server_change(self, diff_info: ServerInfo):
+        if diff_info.dismiss_time > diff_info.buy_and_move_info[0].time_step + diff_info.life_expectancy:
+            raise ValueError("Dismiss time cannot exceed maximum lifespan.")
         if self.__blackboard is None:
             # Initialize blackboard
             self.__blackboard = DiffBlackboard(
@@ -644,9 +648,41 @@ class DiffSolution:
         差分评估函数
         """
         if self.__blackboard is None:
-            raise Exception("No blackboard data. Apply server changes before evaluation.")
+            print("No blackboard data. Apply server changes before evaluation.")
+            return 0.0
         # Recalculate satisfaction
         self._recalculate_satisfaction(self.__blackboard)
 
         evaluation_result = self._final_calculation(self.__blackboard)
         return evaluation_result
+
+    def export_solution_to_json(self, file_path: str):
+        solution_data = []
+
+        # 遍历服务器映射
+        for server_id, server_info in self.server_map.items():
+            # 遍历服务器的每个数量（从 1 开始编号）
+            for i in range(server_info.quantity):
+                # 遍历每个移动信息，生成 buy 和 move 动作
+                for move_idx, move_info in enumerate(server_info.buy_and_move_info):
+                    action = "buy" if move_idx == 0 else "move"  # 第一个是 buy，其余是 move
+                    solution_data.append({
+                        "time_step": move_info.time_step + 1,
+                        "datacenter_id": move_info.target_datacenter,
+                        "server_generation": server_info.server_generation,
+                        "server_id": f"{server_id}:{i + 1}",
+                        "action": action
+                    })
+
+                # 生成 dismiss 动作，使用最后一个 move 的 datacenter_id
+                solution_data.append({
+                    "time_step": server_info.dismiss_time + 1,
+                    "datacenter_id": server_info.buy_and_move_info[-1].target_datacenter,
+                    "server_generation": server_info.server_generation,
+                    "server_id": f"{server_id}:{i + 1}",
+                    "action": "dismiss"
+                })
+
+        # 将结果写入 JSON 文件
+        with open(file_path, 'w') as json_file:
+            json.dump(solution_data, json_file, indent=4)
