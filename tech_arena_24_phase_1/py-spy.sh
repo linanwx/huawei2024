@@ -1,3 +1,3 @@
 #!/bin/bash
 
-sudo py-spy record -o profile.svg -- python SA_quantity_new.py
+sudo py-spy record -o profile.svg -- python real_diff_SA.py

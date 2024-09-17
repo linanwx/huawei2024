@@ -656,33 +656,63 @@ class DiffSolution:
         evaluation_result = self._final_calculation(self.__blackboard)
         return evaluation_result
 
-    def export_solution_to_json(self, file_path: str):
-        solution_data = []
+def export_solution_to_json(server_map: Dict[str, ServerInfo], file_path: str):
+    solution_data = []
 
-        # 遍历服务器映射
-        for server_id, server_info in self.server_map.items():
-            # 遍历服务器的每个数量（从 1 开始编号）
-            for i in range(server_info.quantity):
-                # 遍历每个移动信息，生成 buy 和 move 动作
-                for move_idx, move_info in enumerate(server_info.buy_and_move_info):
-                    action = "buy" if move_idx == 0 else "move"  # 第一个是 buy，其余是 move
-                    solution_data.append({
-                        "time_step": move_info.time_step + 1,
-                        "datacenter_id": move_info.target_datacenter,
-                        "server_generation": server_info.server_generation,
-                        "server_id": f"{server_id}:{i + 1}",
-                        "action": action
-                    })
-
-                # 生成 dismiss 动作，使用最后一个 move 的 datacenter_id
+    # 遍历服务器映射
+    for server_id, server_info in server_map.items():
+        # 遍历服务器的每个数量（从 1 开始编号）
+        for i in range(server_info.quantity):
+            # 遍历每个移动信息，生成 buy 和 move 动作
+            for move_idx, move_info in enumerate(server_info.buy_and_move_info):
+                action = "buy" if move_idx == 0 else "move"  # 第一个是 buy，其余是 move
                 solution_data.append({
-                    "time_step": server_info.dismiss_time + 1,
-                    "datacenter_id": server_info.buy_and_move_info[-1].target_datacenter,
+                    "time_step": move_info.time_step + 1,
+                    "datacenter_id": move_info.target_datacenter,
                     "server_generation": server_info.server_generation,
                     "server_id": f"{server_id}:{i + 1}",
-                    "action": "dismiss"
+                    "action": action
                 })
 
-        # 将结果写入 JSON 文件
-        with open(file_path, 'w') as json_file:
-            json.dump(solution_data, json_file, indent=4)
+            # 生成 dismiss 动作，使用最后一个 move 的 datacenter_id
+            solution_data.append({
+                "time_step": server_info.dismiss_time + 1,
+                "datacenter_id": server_info.buy_and_move_info[-1].target_datacenter,
+                "server_generation": server_info.server_generation,
+                "server_id": f"{server_id}:{i + 1}",
+                "action": "dismiss"
+            })
+
+    # 将结果写入 JSON 文件
+    with open(file_path, 'w') as json_file:
+        json.dump(solution_data, json_file, indent=4)
+
+def update_best_solution(old_best: Dict[str, 'ServerInfo'], current: Dict[str, 'ServerInfo']) -> Dict[str, 'ServerInfo']:
+    """
+    更新旧的最优解，使其与当前解保持同步，仅对有变化的部分进行拷贝。
+
+    参数:
+        old_best (Dict[str, ServerInfo]): 旧的最优解的 server_map。
+        current (Dict[str, ServerInfo]): 当前解的 server_map。
+
+    返回:
+        Dict[str, ServerInfo]: 更新后的旧的最优解的 server_map。
+    """
+    # 1. 删除旧解中当前解不存在的键
+    keys_to_remove = set(old_best.keys()) - set(current.keys())
+    for key in keys_to_remove:
+        del old_best[key]
+
+    # 2. 遍历当前解，处理新增和更新的键
+    for key, current_value in current.items():
+        if key not in old_best:
+            # 3. 添加新的键，进行深拷贝
+            old_best[key] = copy.deepcopy(current_value)
+        else:
+            old_value = old_best[key]
+            if old_value != current_value:
+                # 4. 如果值不同，更新旧解中的值
+                old_best[key] = copy.deepcopy(current_value)
+            # 如果值相同，则无需操作，保留旧解中的值
+
+    return old_best

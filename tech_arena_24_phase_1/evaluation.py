@@ -210,14 +210,14 @@ def get_valid_columns(cols1, cols2):
     return list(set(cols1).intersection(set(cols2)))
 
 
-# def adjust_capacity_by_failure_rate(x):
-#     # HELPER FUNCTION TO CALCULATE THE FAILURE RATE f
-#     return int(x * (1 - truncweibull_min.rvs(0.3, 0.05, 0.1, size=1).item()))
-
 def adjust_capacity_by_failure_rate(x):
-    # 使用期望值代替随机数
-    expected_value = 0.0726
-    return x * (1 - expected_value)
+    # HELPER FUNCTION TO CALCULATE THE FAILURE RATE f
+    return int(x * (1 - truncweibull_min.rvs(0.3, 0.05, 0.1, size=1).item()))
+
+# def adjust_capacity_by_failure_rate(x):
+#     # 使用期望值代替随机数
+#     expected_value = 0.0726
+#     return x * (1 - expected_value)
 
 def check_datacenter_slots_size_constraint(fleet):
     # CHECK DATACENTERS SLOTS SIZE CONSTRAINT

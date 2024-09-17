@@ -11,7 +11,7 @@ from dataclasses import dataclass
 from colorama import Fore, Style
 
 # Import the new DiffSolution and related classes
-from real_diff_evaluation import DiffSolution, ServerInfo, ServerMoveInfo
+from real_diff_evaluation import DiffSolution, ServerInfo, ServerMoveInfo, export_solution_to_json, update_best_solution
 from idgen import ThreadSafeIDGenerator
 
 TIME_STEPS = 168
@@ -153,10 +153,14 @@ class NeighborhoodOperation(ABC):
     def __init__(self, context: OperationContext):
         self.context = context
 
-    def _print(self, *args, **kwargs):
+    def _print(self, *args, color=None, **kwargs):
         if self.context.verbose:
-            print(*args, **kwargs)
-
+            # 设置颜色
+            if color:
+                print(f"{color}{' '.join(map(str, args))}{Style.RESET_ALL}", **kwargs)
+            else:
+                print(*args, **kwargs)
+            
     @abstractmethod
     def execute(self):
         pass
@@ -191,21 +195,18 @@ class BuyServerOperation(NeighborhoodOperation):
         max_available_slots = self.context.slot_manager.get_maximum_available_slots(time_step, dismiss_time, data_center)
 
         if max_available_slots < slots_size:
-            self._print(f"Not enough slots in datacenter {data_center} for server {server_generation}")
+            self._print(f"Not enough slots {max_available_slots} in datacenter {data_center} for server {server_generation} to buy at time {time_step}", color=Fore.YELLOW)
             return False
 
         # 计算最大购买数量，基于 MAX_PURCHASE_RATIO
         max_quantity_based_on_ratio = int((max_available_slots // slots_size) * self.MAX_PURCHASE_RATIO)
-        max_quantity = max(1, max_quantity_based_on_ratio)  # 确保至少购买1个
+        if max_available_slots // slots_size >= 1 and max_quantity_based_on_ratio == 0:
+            max_quantity_based_on_ratio = 1 # 确保至少购买1个
 
-        if max_quantity_based_on_ratio >= 1:
-            purchase_quantity = random.randint(1, min(int(max_quantity_based_on_ratio), max_quantity))
-        else:
-            purchase_quantity = 1
-
+        purchase_quantity = random.randint(1, max_quantity_based_on_ratio)
         # 计算所需插槽
         total_slots_needed = purchase_quantity * slots_size
-        self._print(f"Max available slots: {max_available_slots}, Max purchase quantity: {max_quantity}, Purchase quantity: {purchase_quantity}")
+        self._print(f"Max available slots: {max_available_slots}, Max purchase quantity: {max_quantity_based_on_ratio}, Purchase quantity: {purchase_quantity}")
 
         # 检查槽位可用性
         if self.context.slot_manager.check_availability(time_step, dismiss_time, data_center, total_slots_needed):
@@ -248,7 +249,7 @@ class MoveServerOperation(NeighborhoodOperation):
         max_dismiss_time = purchase_time + server_copy.life_expectancy
         max_dismiss_time = min(max_dismiss_time, TIME_STEPS)
         if server_copy.dismiss_time >= max_dismiss_time:
-            self._print(f"Server {server_id} has reached maximum lifespan, cannot move")
+            self._print(f"Server {server_id} has reached maximum lifespan, from {purchase_time} to {server_copy.dismiss_time}, life {server_copy.dismiss_time - purchase_time}, max life {max_dismiss_time - purchase_time}", color=Fore.YELLOW)
             return False
 
         # 计算可迁移的时间步，迁移时间不能超过服务器的最大寿命
@@ -346,6 +347,7 @@ class AdjustQuantityOperation(NeighborhoodOperation):
 
             # 存储每个数据中心和时间段内需要的插槽数量
             slots_needed_per_period = []
+            max_quantity_list = []
 
             # 计算每个数据中心和时间段的可用插槽，确定可增加的最大数量
             for i, move_info in enumerate(server.buy_and_move_info):
@@ -360,6 +362,9 @@ class AdjustQuantityOperation(NeighborhoodOperation):
                 available_slots = self.context.slot_manager.get_maximum_available_slots(start_time, end_time, data_center)
                 # 计算该时间段可增加的最大数量
                 max_quantity = int(available_slots // slots_size * self.MAX_QUANTITY_CHANGE)
+                if available_slots // slots_size >= 1 and max_quantity == 0:
+                    max_quantity = 1 # 确保至少增加1个
+                max_quantity_list.append(max_quantity)
 
                 if max_additional_quantity is None or max_quantity < max_additional_quantity:
                     max_additional_quantity = max_quantity
@@ -368,6 +373,8 @@ class AdjustQuantityOperation(NeighborhoodOperation):
 
             if max_additional_quantity <= 0:
                 self._print(f"Not enough slots to increase quantity of server {server_id}")
+                self._print(f"Max additional quantity: {max_additional_quantity}, Slots needed per period: {slots_needed_per_period}, Max quantity list: {max_quantity_list}")
+                self._print(f"Server: {server}")
                 return False
 
             # 随机选择要增加的数量
@@ -407,6 +414,7 @@ class AdjustTimeOperation(NeighborhoodOperation):
 
         if operation_type == 'buy':
             earliest_time, latest_time = self.get_adjustable_time_range(server_copy, 'buy')
+            self._print(f'Adjustable time range for buy operation: {earliest_time} - {latest_time}')
             if earliest_time is None or latest_time is None:
                 self._print(f"No valid purchase times available for server {server_copy.server_id}")
                 self._print(f"Earliest time: {earliest_time}, Latest time: {latest_time}")
@@ -417,8 +425,9 @@ class AdjustTimeOperation(NeighborhoodOperation):
 
         elif operation_type == 'move':
             result = self.get_adjustable_time_range(server_copy, 'move')
+            self._print(f'Adjustable time range for move operation: {result}')
             if result is None:
-                self._print(f"No migrations to adjust for server {server_copy.server_id}")
+                self._print(f"No migrations to adjust for server {server_copy.server_id}", color=Fore.YELLOW)
                 return False
             earliest_time, latest_time, move_idx = result
             if earliest_time is None or latest_time is None:
@@ -428,7 +437,9 @@ class AdjustTimeOperation(NeighborhoodOperation):
             return self.adjust_migration_time(server_copy, server, move_idx, new_migration_time)
 
         elif operation_type == 'dismiss':
+            self._print(f"Adjusting dismiss time for server {server_copy.server_id}, current dismiss time: {server_copy.dismiss_time}, purchase time: {server_copy.buy_and_move_info[0].time_step}")
             earliest_time, latest_time = self.get_adjustable_time_range(server_copy, 'dismiss')
+            self._print(f'Adjustable time range for dismiss operation: {earliest_time} - {latest_time}')
             if earliest_time is None or latest_time is None:
                 self._print(f"No valid dismiss times available for server {server_copy.server_id}")
                 return False
@@ -451,15 +462,18 @@ class AdjustTimeOperation(NeighborhoodOperation):
             server_info = self.context.servers_df[self.context.servers_df['server_generation'] == server.server_generation].iloc[0]
             release_start = server_info['release_start'] - 1  # 时间步索引从0开始
             release_end = server_info['release_end'] - 1
+            self._print(f'Release start: {release_start}, Release end: {release_end}')
             dismiss_time = server.dismiss_time
             earliest_time_by_dismiss = dismiss_time - server.life_expectancy
             if earliest_time_by_dismiss < 0:
                 earliest_time_by_dismiss = 0
+            self._print(f'Earliest time by dismiss: {earliest_time_by_dismiss}, Dismiss time: {dismiss_time}')
 
             # 可调整的购买时间范围
             min_time = max(release_start, earliest_time_by_dismiss)
             max_time = min(release_end, server.dismiss_time - 1, max_dismiss_time - 1, next_move_time - 1)
             current_time = server.buy_and_move_info[0].time_step
+            self._print(f'Earliest time: {min_time}, Latest time: {max_time}, Current time: {current_time}')
 
             # 数据中心
             data_center = server.buy_and_move_info[0].target_datacenter
@@ -470,6 +484,9 @@ class AdjustTimeOperation(NeighborhoodOperation):
                 min_time, 
                 current_time - 1, # 向前找能调整的位置
                 sign=-1)
+            
+            if earliest_time is None:
+                earliest_time = current_time
             
             self._print(f'Earliest time: {earliest_time}, Latest time: {max_time}')
             
@@ -505,6 +522,8 @@ class AdjustTimeOperation(NeighborhoodOperation):
                 min_time,
                 current_time - 1, # 向前找能调整的位置
                 sign=-1)
+            if earliest_time is None:
+                earliest_time = current_time
             # 注意这里是在调整前者时间长度
             latest_time = self.context.slot_manager.find_time_step(
                 data_center_prev,
@@ -512,7 +531,7 @@ class AdjustTimeOperation(NeighborhoodOperation):
                 current_time, # 向后找能调整的位置
                 max_time - 1,
                 sign=1)
-            latest_prev_time = latest_time + 1 if latest_time is not None else None
+            latest_prev_time = latest_time + 1 if latest_time is not None else current_time
             return earliest_time, latest_prev_time, move_idx
 
         elif operation_type == 'dismiss':
@@ -520,8 +539,9 @@ class AdjustTimeOperation(NeighborhoodOperation):
             min_time = last_move_time + 1
             max_time = max_dismiss_time
             current_time = server.dismiss_time
-
             data_center = server.buy_and_move_info[-1].target_datacenter
+            self._print(f'Last move time: {last_move_time}, Min dismiss time: {min_time}, Max dismiss time: {max_time}, Current dismiss time: {current_time}')
+
             # 注意这里调整的是前者时间长度
             latest_time = self.context.slot_manager.find_time_step(
                 data_center,
@@ -530,7 +550,7 @@ class AdjustTimeOperation(NeighborhoodOperation):
                 max_time -1,
                 sign=1)
             
-            latest_dismiss_time = latest_time + 1 if latest_time is not None else None
+            latest_dismiss_time = latest_time + 1 if latest_time is not None else current_time
             
             return min_time, latest_dismiss_time
             
@@ -600,6 +620,140 @@ class AdjustTimeOperation(NeighborhoodOperation):
             self._print("Dismiss time is earlier than expected")
             return False
         return True
+    
+class RemoveServerOperation(NeighborhoodOperation):
+    def execute(self):
+        if not self.context.solution.server_map:
+            self._print("No servers to remove")
+            return False
+
+        # Decide whether to delete a server or delete a move record
+        if random.random() < 0.5:
+            return self.delete_server()
+        else:
+            return self.delete_move_record()
+
+    def delete_server(self):
+        # Randomly select a server to delete
+        server = random.choice(list(self.context.solution.server_map.values()))
+        server_id = server.server_id
+        self._print(f"Deleting server {server_id}")
+
+        server_copy = self.context.solution.get_server_copy(server_id)
+
+        # Store slots size and compute total slots to release
+        slots_size = server_copy.slots_size
+        total_slots_to_cancel = server_copy.quantity * slots_size
+
+        # Push slot updates to release slots for all periods and data centers
+        for i, move_info in enumerate(server_copy.buy_and_move_info):
+            start_time = move_info.time_step
+            if i + 1 < len(server_copy.buy_and_move_info):
+                end_time = server_copy.buy_and_move_info[i + 1].time_step
+            else:
+                end_time = server_copy.dismiss_time
+            data_center = move_info.target_datacenter
+
+            self.context.slot_manager.push_slot_update(
+                start_time, end_time, data_center, total_slots_to_cancel, 'cancel'
+            )
+
+        # Remove the server by setting the quantity to zero
+        server_copy.quantity = 0
+
+        # Apply server change
+        self.context.solution.apply_server_change(server_copy)
+
+        return True
+
+    def delete_move_record(self):
+        # Collect servers with more than one move record
+        servers_with_moves = [
+            s for s in self.context.solution.server_map.values()
+            if len(s.buy_and_move_info) > 1
+        ]
+        if not servers_with_moves:
+            self._print("No servers with move records to delete")
+            return False
+
+        # Randomly select a server and a move record to delete (excluding the initial buy)
+        server = random.choice(servers_with_moves)
+        server_id = server.server_id
+        server_copy = self.context.solution.get_server_copy(server_id)
+
+        move_indices = list(range(1, len(server_copy.buy_and_move_info)))
+        move_idx_to_delete = random.choice(move_indices)
+        move_info_to_delete = server_copy.buy_and_move_info[move_idx_to_delete]
+
+        self._print(f"Deleting move record at index {move_idx_to_delete} from server {server_id}")
+
+        # Store slots size and compute total slots to adjust
+        slots_size = server_copy.slots_size
+        slots_needed = server_copy.quantity * slots_size
+
+        # Determine time range of the move to delete
+        start_time = move_info_to_delete.time_step
+        if move_idx_to_delete + 1 < len(server_copy.buy_and_move_info):
+            end_time = server_copy.buy_and_move_info[move_idx_to_delete + 1].time_step
+        else:
+            end_time = server_copy.dismiss_time
+
+        data_center = move_info_to_delete.target_datacenter
+
+        # Remove the move record
+        del server_copy.buy_and_move_info[move_idx_to_delete]
+
+        # Ensure move times are strictly increasing
+        if not self.check_time_sequence(server_copy):
+            self._print("Move times are not strictly increasing after deletion")
+            return False
+
+        # Now, the previous move extends to the end time
+        prev_move_info = server_copy.buy_and_move_info[move_idx_to_delete - 1]
+        prev_data_center = prev_move_info.target_datacenter
+
+        # The extended period is from the start_time of the deleted move to end_time
+        extended_start_time = start_time
+        extended_end_time = end_time
+
+        # Check if the previous data center can accommodate the server during the extended period
+        if not self.context.slot_manager.check_availability(
+            extended_start_time, extended_end_time, prev_data_center, slots_needed
+        ):
+            self._print(
+                f"Not enough slots in data center {prev_data_center} from time {extended_start_time} to {extended_end_time} "
+                f"to accommodate server {server_id} after deleting move record", color=Fore.YELLOW
+            )
+            return False
+
+        # Push slot updates
+        # Release slots in the data center of the deleted move info
+        self.context.slot_manager.push_slot_update(
+            extended_start_time, extended_end_time, data_center, slots_needed, 'cancel'
+        )
+
+        # Reserve slots in the previous data center for the extended period
+        self.context.slot_manager.push_slot_update(
+            extended_start_time, extended_end_time, prev_data_center, slots_needed, 'buy'
+        )
+
+        # Apply server change
+        self.context.solution.apply_server_change(server_copy)
+
+        self._print(
+            f"Deleted move record at index {move_idx_to_delete} from server {server_id}. "
+            f"Server now stays at data center {prev_data_center} from time {prev_move_info.time_step} to {extended_end_time}"
+        )
+
+        return True
+
+    def check_time_sequence(self, server_copy: ServerInfo):
+        times = [move_info.time_step for move_info in server_copy.buy_and_move_info]
+        for earlier, later in zip(times, times[1:]):
+            if earlier >= later:
+                self._print("Move times are not strictly increasing after deletion")
+                return False
+        return True
 
 class SimulatedAnnealing:
     def __init__(self, slot_manager, servers_df, id_gen, solution: DiffSolution, seed, initial_temp, min_temp, alpha, max_iter, verbose=False):
@@ -644,8 +798,12 @@ class SimulatedAnnealing:
             AdjustTimeOperation(context=self.context),
             weight=0.8
         )
+        self.register_operation(
+            RemoveServerOperation(context=self.context),
+            weight=0.2
+        )
 
-        self.best_solution = copy.deepcopy(self.solution)
+        self.best_solution_server_map = copy.deepcopy(self.solution.server_map)
         self.best_score = float('-inf')
 
     def _print(self, *args, color=None, **kwargs):
@@ -683,20 +841,21 @@ class SimulatedAnnealing:
             # 接受新解
             self.solution.commit_server_changes()
             # 检查解是否合法
-            result = self.slot_manager.can_accommodate_servers(self.solution.server_map)
-            if not result:
-                self._print("New solution is invalid", color=Fore.RED)
-                raise ValueError("New solution is invalid")
+            if DEBUG:
+                result = self.slot_manager.can_accommodate_servers(self.solution.server_map)
+                if not result:
+                    self._print("New solution is invalid", color=Fore.RED)
+                    raise ValueError("New solution is invalid")
             self.slot_manager.apply_pending_updates()
             if new_score > self.best_score:
-                self.best_solution = copy.deepcopy(self.solution)
+                self.best_solution_server_map = update_best_solution(self.best_solution_server_map, self.solution.server_map)
                 self.best_score = new_score
                 self._print(f"New best solution with score {self.best_score:.5e}", color=Fore.GREEN)
             return True
         else:
             # 拒绝新解并回滚更改
             self.solution.discard_server_changes()
-            self._print(f"Rejected new solution with score {new_score:.5e}", color=Fore.RED)
+            self._print(f"Rejected new solution with score {new_score:.5e}")
             return False
 
     def run(self):
@@ -720,9 +879,9 @@ class SimulatedAnnealing:
                 if self.current_temp < self.min_temp:
                     break
             else:
-                self._print("No valid neighbor found")
+                self._print("No valid neighbor found", color=Fore.RED)
 
-        return self.best_solution, self.best_score
+        return self.best_solution_server_map, self.best_score
 
 def get_my_solution(seed, verbose=False):
     servers = pd.read_csv('./data/servers.csv')
@@ -741,18 +900,18 @@ def get_my_solution(seed, verbose=False):
         seed=seed,
         initial_temp=200000,
         min_temp=100,
-        alpha=0.9998,
-        max_iter=30000,
+        alpha=0.9999,
+        max_iter=70000,
         verbose=verbose
     )
-    best_solution, best_score = sa.run()
+    best_solution_server_map, best_score = sa.run()
     print(f'Final best score for {seed}: {best_score:.5e}')
-    best_solution.export_solution_to_json(f"./output/{seed}_{best_score:.5e}.json")
-    return best_solution, best_score
+    export_solution_to_json(best_solution_server_map, f"./output/{seed}_{best_score:.5e}.json")
+    return best_solution_server_map, best_score
 
 if __name__ == '__main__':
     start = time.time()
     seed = 3329
-    best_solution, best_score = get_my_solution(seed, verbose=False)
+    best_solution_server_map, best_score = get_my_solution(seed, verbose=False)
     end = time.time()
     print(f"Elapsed time: {end - start:.4f} seconds")
