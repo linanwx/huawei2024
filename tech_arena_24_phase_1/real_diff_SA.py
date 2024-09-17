@@ -710,7 +710,7 @@ class SimulatedAnnealing:
                 new_score = self.solution.diff_evaluation()  # 评估新解
                 accept_prob = self.acceptance_probability(current_score, new_score)
                 if self.verbose == False:
-                    print(f"Iteration: {iteration}. New best solution with score {self.best_score:.5e}")
+                    print(f"Iteration: {iteration}. New best solution for {self.seed} with score {self.best_score:.5e}")
                 if self.accept_solution(accept_prob, new_score):
                     current_score = new_score  # 如果接受，更新当前分数
                     
@@ -747,12 +747,12 @@ def get_my_solution(seed, verbose=False):
     )
     best_solution, best_score = sa.run()
     print(f'Final best score for {seed}: {best_score:.5e}')
+    best_solution.export_solution_to_json(f"./output/{seed}_{best_score:.5e}.json")
     return best_solution, best_score
 
 if __name__ == '__main__':
     start = time.time()
     seed = 3329
     best_solution, best_score = get_my_solution(seed, verbose=False)
-    best_solution.export_solution_to_json(f"./output/{seed}_{best_score:.5e}.json")
     end = time.time()
     print(f"Elapsed time: {end - start:.4f} seconds")

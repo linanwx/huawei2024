@@ -59,5 +59,5 @@ def score_main(directory):
 
 # Specify the directory where JSON files are located
 if __name__ == "__main__":
-    directory = './2024-09-06-07'  # Update this path to your JSON directory
+    directory = './2024-09-06-07-45-56'  # Update this path to your JSON directory
     score_main(directory)
