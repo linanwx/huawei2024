@@ -3,7 +3,7 @@ import os
 import time
 import copy
 import random
-from typing import Dict
+from typing import Dict, Tuple
 import numpy as np
 import pandas as pd
 from abc import ABC, abstractmethod
@@ -11,8 +11,14 @@ from dataclasses import dataclass
 from colorama import Fore, Style
 
 # Import the new DiffSolution and related classes
-from real_diff_evaluation import DiffSolution, ServerInfo, ServerMoveInfo, export_solution_to_json, update_best_solution
+from real_diff_evaluation import DiffSolution, ServerInfo, ServerMoveInfo, export_solution_to_json, update_best_solution, SERVER_GENERATION_MAP, LATENCY_SENSITIVITY_MAP
 from idgen import ThreadSafeIDGenerator
+
+from ppo_sa_env import PPO_SA_Env
+from stable_baselines3 import PPO
+from threading import Thread
+
+from real_diff_SA_basic import SA_status, SlotAvailabilityManager, OperationContext
 
 TIME_STEPS = 168
 DEBUG = True
@@ -22,132 +28,6 @@ output_dir = './output/'
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
 
-class SlotAvailabilityManager:
-    def __init__(self, datacenters, time_steps, verbose=False):
-        self.verbose = verbose
-        self.datacenter_slots = {}
-        self.time_steps = time_steps
-        self.pending_updates = []  # 存储待处理的插槽更新
-
-        for _, row in datacenters.iterrows():
-            dc_id = row['datacenter_id']
-            slots_capacity = row['slots_capacity']
-            # 初始化每个数据中心的插槽为一个 numpy 数组，表示各个时间步的插槽容量
-            self.datacenter_slots[dc_id] = np.full(time_steps, slots_capacity, dtype=int)
-        self.total_slots = {dc: datacenters.loc[datacenters['datacenter_id'] == dc, 'slots_capacity'].values[0] for dc in datacenters['datacenter_id']}
-
-    def _print(self, *args, **kwargs):
-        if self.verbose:
-            print(*args, **kwargs)
-
-    def check_availability(self, start_time, end_time, data_center, slots_needed):
-        # 前闭后开: [start_time, end_time)
-        slots = self.datacenter_slots[data_center][start_time:end_time]
-        return np.all(slots >= slots_needed)
-
-    def get_maximum_available_slots(self, start_time, end_time, data_center):
-        # 前闭后开: [start_time, end_time)
-        slots = self.datacenter_slots[data_center][start_time:end_time]
-        return np.min(slots)
-
-    def update_slots(self, start_time, end_time, data_center, slots_needed, operation='buy'):
-        # 前闭后开: [start_time, end_time)
-        if operation == 'buy':
-            self.datacenter_slots[data_center][start_time:end_time] -= slots_needed
-        elif operation == 'cancel':
-            self.datacenter_slots[data_center][start_time:end_time] += slots_needed
-        self._print(f"Updated slots in datacenter {data_center} from time {start_time} to {end_time} with operation '{operation}' and slots_needed {slots_needed}")
-
-    def push_slot_update(self, start_time, end_time, data_center, slots_needed, operation):
-        self.pending_updates.append((start_time, end_time, data_center, slots_needed, operation))
-        self._print(f"Pushed slot update: operation={operation}, time={start_time}-{end_time}, datacenter={data_center}, slots_needed={slots_needed}")
-    
-    def apply_pending_updates(self):
-        self._print(f"Applying {len(self.pending_updates)} pending slot updates.")
-        for update in self.pending_updates:
-            start_time, end_time, data_center, slots_needed, operation = update
-            self.update_slots(start_time, end_time, data_center, slots_needed, operation)
-        self.pending_updates.clear()
-        self._print("All pending updates applied and cleared.")
-    
-    def clear_pending_updates(self):
-        self._print(f"Clearing {len(self.pending_updates)} pending slot updates without applying them.")
-        self.pending_updates.clear()
-
-    def can_accommodate_servers(self, servers: Dict[str, ServerInfo]) -> bool:
-        # 初始化一个临时的插槽剩余容量快照，用总容量填充
-        temp_datacenter_slots = {dc: np.full(self.time_steps, self.total_slots[dc], dtype=int) for dc in self.datacenter_slots.keys()}
-
-        for server_id, server in servers.items():
-            if server.slots_size is None:
-                raise ValueError(f"服务器 {server_id} 的 slots_size 未定义。")
-            if server.dismiss_time < 1 or server.dismiss_time > self.time_steps:
-                raise ValueError(f"服务器 {server_id} 的 dismiss_time {server.dismiss_time} 不在有效范围内 (1, {self.time_steps})。")
-            if not server.buy_and_move_info:
-                raise ValueError(f"服务器 {server_id} 没有任何买入或迁移信息。")
-
-            # 确保 buy_and_move_info 按 time_step 排序
-            sorted_moves = sorted(server.buy_and_move_info, key=lambda x: x.time_step)
-
-            # 遍历每一个迁移信息，确定每个阶段的时间范围和目标数据中心
-            for i, move in enumerate(sorted_moves):
-                start_time = move.time_step
-                if i + 1 < len(sorted_moves):
-                    end_time = sorted_moves[i + 1].time_step  # 前闭后开: 下一个迁移的时间点作为结束
-                else:
-                    end_time = server.dismiss_time  # 前闭后开: dismiss_time 作为结束
-
-                if start_time >= end_time:
-                    continue  # 无需处理
-
-                if end_time > self.time_steps:
-                    end_time = self.time_steps  # 确保不超出时间范围
-
-                dc = move.target_datacenter
-                slots_needed = server.quantity * server.slots_size
-
-                # 检查目标数据中心是否存在
-                if dc not in self.total_slots:
-                    raise ValueError(f"数据中心 {dc} 不存在。")
-
-                # 在临时插槽中减少剩余容量
-                temp_datacenter_slots[dc][start_time:end_time] -= slots_needed
-
-                # 检查是否超过容量（即剩余容量是否为负数）
-                if np.any(temp_datacenter_slots[dc][start_time:end_time] < 0):
-                    self._print(f"服务器 {server_id} 在数据中心 {dc} 的时间范围 {start_time} 到 {end_time} 超过插槽容量。需要 {slots_needed}，当前剩余容量 {temp_datacenter_slots[dc][start_time:end_time]}")                    
-                    return False
-
-        # 如果所有服务器都可以被容纳
-        self._print("所有服务器都可以被独立容纳。")
-        return True
-    
-    def find_time_step(self, data_center, slots_needed, time_range_start, time_range_end, sign = 1):
-        ret = None
-        self._print(f'Finding time step in data center {data_center} for slots_needed {slots_needed} in time range {time_range_start} to {time_range_end}')
-        # self._print(f'{self.datacenter_slots[data_center][time_range_start:time_range_end + 1]}')
-        if sign == 1:
-            for time_step in range(time_range_start, time_range_end + 1):
-                if self.datacenter_slots[data_center][time_step] >= slots_needed:
-                    ret = time_step
-                else:
-                    break
-        if sign == -1:
-            for time_step in reversed(range(time_range_start, time_range_end + 1)):
-                if self.datacenter_slots[data_center][time_step] >= slots_needed:
-                    ret = time_step
-                else:
-                    break
-        return ret
-
-    
-@dataclass
-class OperationContext:
-    slot_manager: SlotAvailabilityManager
-    servers_df: pd.DataFrame
-    id_gen: ThreadSafeIDGenerator
-    solution: DiffSolution
-    verbose: bool = False
 
 class NeighborhoodOperation(ABC):
     def __init__(self, context: OperationContext):
@@ -160,12 +40,80 @@ class NeighborhoodOperation(ABC):
                 print(f"{color}{' '.join(map(str, args))}{Style.RESET_ALL}", **kwargs)
             else:
                 print(*args, **kwargs)
-            
+
+    @abstractmethod
+    def execute_and_evaluate(self) -> Tuple[bool, float]:
+        pass
+
+
+class SA_NeighborhoodOperation(NeighborhoodOperation):
+    def execute_and_evaluate(self):
+        success = self.execute()
+        if success:
+            score = self.context.solution.diff_evaluation()
+            return success, score
+        else:
+            return success, 0
+        
     @abstractmethod
     def execute(self):
         pass
 
-class BuyServerOperation(NeighborhoodOperation):
+import gym
+from gym import spaces
+from stable_baselines3 import PPO
+import numpy as np
+from stable_baselines3.common.callbacks import BaseCallback
+
+class PPO_BuyServerOperation(NeighborhoodOperation):
+    def __init__(self, context: OperationContext, env: PPO_SA_Env, model: PPO):
+        super().__init__(context)
+        self.env = env
+        self.model = model
+        self.sa_thread = None
+
+    def execute_and_evaluate(self):
+        # Start the environment thread for PPO learning
+        if self.sa_thread is None:
+            self.sa_thread = Thread(target=self.run_sa_environment)
+            self.sa_thread.start()
+
+        # Send signal2 to notify the environment
+        self._print("Sending signal2 to PPO environment")
+        self.env.signal2.set()
+
+        # Wait for signal1 from the environment
+        self._print("Waiting for signal1 from PPO environment")
+        self.env.signal1.wait()
+        self._print("Received signal1 from PPO environment")
+        self.env.signal1.clear()
+
+        # Read the new score from the environment
+        new_score = self.env.info['score']
+        self._print(f"New score from PPO: {new_score}")
+
+        # Check constraint violations
+        # Assuming the environment sets 'constraint_violation' in info
+        if 'constraint_violation' in self.env.info and self.env.info['constraint_violation']:
+            # Violation occurred
+            self._print(f"Constraint violation: {self.env.info['constraint_violation']}")
+            return False, -1  # Fixed penalty
+        else:
+            # No violation
+            return True, new_score
+
+    def run_sa_environment(self):
+        # Function to run PPO learning in a separate thread
+        # Here we train the PPO agent
+        self._print("Starting PPO learning")
+        self.model.learn(total_timesteps=100000000)  # Adjust as needed
+        self._print("PPO learning completed")
+
+    def execute(self):
+        # Not used in this context
+        pass
+
+class BuyServerOperation(SA_NeighborhoodOperation):
     MAX_PURCHASE_RATIO = 0.12
     def execute(self):
         time_step = random.randint(0, TIME_STEPS - 1)  # 随机选择一个时间步
@@ -231,7 +179,7 @@ class BuyServerOperation(NeighborhoodOperation):
             self._print(f"Not enough slots in datacenter {data_center} for server {server_generation}")
             return False
         
-class MoveServerOperation(NeighborhoodOperation):
+class MoveServerOperation(SA_NeighborhoodOperation):
     def execute(self):
         if not self.context.solution.server_map:
             self._print("No servers to move")
@@ -301,7 +249,7 @@ class MoveServerOperation(NeighborhoodOperation):
         self._print(f"Moved server {server_id} from {old_data_center} to {new_data_center} at time {earliest_move_time}, new dismiss_time is {new_dismiss_time}")
         return True
 
-class AdjustQuantityOperation(NeighborhoodOperation):
+class AdjustQuantityOperation(SA_NeighborhoodOperation):
     MAX_QUANTITY_CHANGE = 0.12
     def execute(self):
         if not self.context.solution.server_map:
@@ -400,7 +348,7 @@ class AdjustQuantityOperation(NeighborhoodOperation):
             self._print(f"Increased quantity of server {server_id} from {current_quantity} to {new_quantity}")
             return True
 
-class AdjustTimeOperation(NeighborhoodOperation):
+class AdjustTimeOperation(SA_NeighborhoodOperation):
     def execute(self):
         if not self.context.solution.server_map:
             self._print("No servers to adjust time")
@@ -584,12 +532,12 @@ class AdjustTimeOperation(NeighborhoodOperation):
         slots_needed = server_copy.quantity * server_copy.slots_size
 
         # 释放原先的插槽预订
-        self.update_slots(original_server, slots_needed, 'cancel')
+        self.push_slot_update(original_server, slots_needed, 'cancel')
 
         # 预订新的插槽
-        if not self.update_slots(server_copy, slots_needed, 'buy'):
+        if not self.push_slot_update(server_copy, slots_needed, 'buy'):
             # 如果预订失败，恢复原先的插槽预订
-            self.update_slots(original_server, slots_needed, 'buy')
+            self.push_slot_update(original_server, slots_needed, 'buy')
             return False
 
         # 应用服务器变更
@@ -597,7 +545,7 @@ class AdjustTimeOperation(NeighborhoodOperation):
         self._print(f"Adjusted time for server {server_copy.server_id}")
         return True
 
-    def update_slots(self, server:ServerInfo, slots_needed, operation):
+    def push_slot_update(self, server:ServerInfo, slots_needed, operation):
         # 遍历服务器的所有时间段，更新插槽
         for i, move_info in enumerate(server.buy_and_move_info):
             start_time = move_info.time_step
@@ -621,7 +569,7 @@ class AdjustTimeOperation(NeighborhoodOperation):
             return False
         return True
     
-class RemoveServerOperation(NeighborhoodOperation):
+class RemoveServerOperation(SA_NeighborhoodOperation):
     def execute(self):
         if not self.context.solution.server_map:
             self._print("No servers to remove")
@@ -754,18 +702,21 @@ class RemoveServerOperation(NeighborhoodOperation):
                 self._print("Move times are not strictly increasing after deletion")
                 return False
         return True
+    
 
 class SimulatedAnnealing:
     def __init__(self, slot_manager, servers_df, id_gen, solution: DiffSolution, seed, initial_temp, min_temp, alpha, max_iter, verbose=False):
-        self.current_temp = initial_temp
-        self.min_temp = min_temp
-        self.alpha = alpha
-        self.max_iter = max_iter
+        self.status = SA_status()
+        self.status.current_temp = initial_temp
+        self.status.min_temp = min_temp
+        self.status.alpha = alpha
+        self.status.max_iter = max_iter
+        self.status.verbose = verbose
+        self.status.seed = seed
         self.id_gen = id_gen
-        self.slot_manager: SlotAvailabilityManager = slot_manager
-        self.verbose = verbose
-        self.seed = seed
+
         self.solution = solution
+        self.slot_manager: SlotAvailabilityManager = slot_manager
 
         # 初始化操作上下文
         self.context = OperationContext(
@@ -773,8 +724,19 @@ class SimulatedAnnealing:
             servers_df=servers_df,
             id_gen=self.id_gen,
             solution=self.solution,
-            verbose=self.verbose
+            verbose=self.status.verbose,
+            sa_status=self.status
         )
+
+        # Initialize the PPO environment and model
+        policy_kwargs = dict(
+            net_arch=[dict(pi=[128, 128, 64], vf=[128, 128, 64])]
+        )
+        self.env = PPO_SA_Env(solution, self.context, slot_manager, servers_df, id_gen)
+        self.model = PPO('MultiInputPolicy', self.env, verbose=1, policy_kwargs=policy_kwargs)
+        if os.path.exists(self.env.MODEL_SAVE_PATH):
+            self.model.load(self.env.MODEL_SAVE_PATH)
+        self.env.model = self.model
 
         # 初始化操作
         self.operations : list[NeighborhoodOperation] = []
@@ -782,32 +744,36 @@ class SimulatedAnnealing:
         self.total_weight = 0.0
 
         # 注册操作
+        # self.register_operation(
+        #     BuyServerOperation(context=self.context),
+        #     weight=0.4
+        # )
+        # self.register_operation(
+        #     MoveServerOperation(context=self.context),
+        #     weight=0.4
+        # )
+        # self.register_operation(
+        #     AdjustQuantityOperation(context=self.context),
+        #     weight=0.2
+        # )
+        # self.register_operation(
+        #     AdjustTimeOperation(context=self.context),
+        #     weight=0.8
+        # )
+        # self.register_operation(
+        #     RemoveServerOperation(context=self.context),
+        #     weight=0.2
+        # )
         self.register_operation(
-            BuyServerOperation(context=self.context),
+            PPO_BuyServerOperation(context=self.context, env=self.env, model=self.model),
             weight=0.4
-        )
-        self.register_operation(
-            MoveServerOperation(context=self.context),
-            weight=0.4
-        )
-        self.register_operation(
-            AdjustQuantityOperation(context=self.context),
-            weight=0.2
-        )
-        self.register_operation(
-            AdjustTimeOperation(context=self.context),
-            weight=0.8
-        )
-        self.register_operation(
-            RemoveServerOperation(context=self.context),
-            weight=0.2
         )
 
         self.best_solution_server_map = copy.deepcopy(self.solution.server_map)
         self.best_score = float('-inf')
 
     def _print(self, *args, color=None, **kwargs):
-        if self.verbose:
+        if self.status.verbose:
             # 设置颜色
             if color:
                 print(f"{color}{' '.join(map(str, args))}{Style.RESET_ALL}", **kwargs)
@@ -826,14 +792,15 @@ class SimulatedAnnealing:
     def generate_neighbor(self):
         self.slot_manager.clear_pending_updates()
         operation = self.choose_operation()
-        success = operation.execute()
-        return success
+        success, score  = operation.execute_and_evaluate()
+        self._print(f"Operation: {operation.__class__.__name__}, Score: {score:.5e}, Success: {success}")
+        return score, success, operation
 
     def acceptance_probability(self, old_score, new_score):
         if new_score > old_score:
             return 1.0
         else:
-            return np.exp((new_score - old_score) / self.current_temp)
+            return np.exp((new_score - old_score) / self.status.current_temp)
 
     def accept_solution(self, accept_prob, new_score):
         if accept_prob >= 1.0 or random.random() < accept_prob:
@@ -847,9 +814,9 @@ class SimulatedAnnealing:
                     self._print("New solution is invalid", color=Fore.RED)
                     raise ValueError("New solution is invalid")
             self.slot_manager.apply_pending_updates()
-            if new_score > self.best_score:
+            if new_score > self.status.best_score:
                 self.best_solution_server_map = update_best_solution(self.best_solution_server_map, self.solution.server_map)
-                self.best_score = new_score
+                self.status.best_score = new_score
                 self._print(f"New best solution with score {self.best_score:.5e}", color=Fore.GREEN)
             return True
         else:
@@ -860,28 +827,27 @@ class SimulatedAnnealing:
 
     def run(self):
         """模拟退火的主循环。"""
-        current_score = self.solution.diff_evaluation()  # 初始评价
+        self.status.current_score = self.solution.diff_evaluation()  # 初始评价
         iteration = 0  # 用于记录有效迭代次数
-        while iteration < self.max_iter:
-            self._print(f"<------ Iteration {iteration}, Temperature {self.current_temp:.2f} ------>")
+        while iteration < self.status.max_iter:
+            self._print(f"<------ Iteration {iteration}, Temperature {self.status.current_temp:.2f} Bestscore {self.status.best_score:.5e} ------->", color=Fore.CYAN)
             
-            if self.generate_neighbor():  # 生成一个邻域解
-                new_score = self.solution.diff_evaluation()  # 评估新解
-                accept_prob = self.acceptance_probability(current_score, new_score)
-                if self.verbose == False:
-                    print(f"Iteration: {iteration}. New best solution for {self.seed} with score {self.best_score:.5e}")
+            new_score, success, operation = self.generate_neighbor()  # 生成一个邻域解
+            if success:
+                accept_prob = self.acceptance_probability(self.status.current_score, new_score)
+                print(f"Iteration: {iteration}. New best solution for {self.status.seed} with score {self.status.best_score:.5e}")
                 if self.accept_solution(accept_prob, new_score):
-                    current_score = new_score  # 如果接受，更新当前分数
+                    self.status.current_score = new_score  # 如果接受，更新当前分数
                     
                 # 只有当找到有效邻域解时，才增加迭代次数
                 iteration += 1
-                self.current_temp *= self.alpha  # 降低温度
-                if self.current_temp < self.min_temp:
+                self.status.current_temp *= self.status.alpha  # 降低温度
+                if self.status.current_temp < self.status.min_temp:
                     break
             else:
                 self._print("No valid neighbor found", color=Fore.RED)
 
-        return self.best_solution_server_map, self.best_score
+        return self.best_solution_server_map, self.status.best_score
 
 def get_my_solution(seed, verbose=False):
     servers = pd.read_csv('./data/servers.csv')
@@ -912,6 +878,6 @@ def get_my_solution(seed, verbose=False):
 if __name__ == '__main__':
     start = time.time()
     seed = 3329
-    best_solution_server_map, best_score = get_my_solution(seed, verbose=False)
+    best_solution_server_map, best_score = get_my_solution(seed, verbose=True)
     end = time.time()
     print(f"Elapsed time: {end - start:.4f} seconds")

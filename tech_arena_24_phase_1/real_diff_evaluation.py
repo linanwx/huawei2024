@@ -150,35 +150,35 @@ class DiffSolution:
         # 初始化一个空解
         self.server_map: Dict[str, ServerInfo] = {}
         # 初始化每一个时间步骤的服务器容量
-        self.__capacity_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
+        self.capacity_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
         # 初始化每一个时间步骤的需求矩阵
-        self.__demand_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
+        self.demand_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
         # 初始化每一个时间步骤的满足矩阵
-        self.__satisfaction_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
+        self.satisfaction_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
         # 初始化每一个时间步骤的服务器寿命
-        self.__lifespan = np.zeros(TIME_STEPS, dtype=float)
+        self.lifespan = np.zeros(TIME_STEPS, dtype=float)
         # 初始化每一个时间步骤的寿命百分比总和
-        self.__lifespan_percentage_sum = np.zeros(TIME_STEPS, dtype=float)
+        self.lifespan_percentage_sum = np.zeros(TIME_STEPS, dtype=float)
         # 初始化每一个时间步骤的服务器数量
-        self.__fleetsize = np.zeros(TIME_STEPS, dtype=float)
+        self.fleetsize = np.zeros(TIME_STEPS, dtype=float)
         # 初始化平均寿命百分比
-        self.__average_lifespan = np.zeros(TIME_STEPS, dtype=float)
+        self.average_lifespan = np.zeros(TIME_STEPS, dtype=float)
         # 初始化每一个时间步骤的成本
-        self.__cost = np.zeros(TIME_STEPS, dtype=float)
+        self.cost = np.zeros(TIME_STEPS, dtype=float)
         # 差分黑板，用于暂存变动
         self.__blackboard: DiffBlackboard = None
         # 当前的差分信息
         self.__diff_info: ServerInfo = None
         # 初始化利用率矩阵
-        self.__utilization_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
+        self.utilization_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
         # 初始化平均利用率
-        self.__average_utilization = np.zeros(TIME_STEPS, dtype=float)
+        self.average_utilization = np.zeros(TIME_STEPS, dtype=float)
 
         self._load_demand_data('./data/demand.csv', seed)
         self.__verbose = verbose
 
-        self.__cost_details = {t: {'purchase_cost': 0, 'energy_cost': 0, 'maintenance_cost': 0} for t in range(TIME_STEPS)}
-        self.__capacity_combinations = {t: {} for t in range(TIME_STEPS)}
+        self.cost_details = {t: {'purchase_cost': 0, 'energy_cost': 0, 'maintenance_cost': 0} for t in range(TIME_STEPS)}
+        self.capacity_combinations = {t: {} for t in range(TIME_STEPS)} # 日志用
 
     def get_server_copy(self, server_id:str):
         server_info = self.server_map.get(server_id)
@@ -193,12 +193,12 @@ class DiffSolution:
     def _init_price_matrix(self):
         num_latencies = len(LATENCY_SENSITIVITY_MAP)
         num_servers = len(SERVER_GENERATION_MAP)
-        self.__price_matrix = np.zeros((num_latencies, num_servers), dtype=float)
+        self.price_matrix = np.zeros((num_latencies, num_servers), dtype=float)
         for latency_key, latency_idx in LATENCY_SENSITIVITY_MAP.items():
             for server_key, server_idx in SERVER_GENERATION_MAP.items():
                 price_key = (server_key, latency_key)
-                selling_price = self.__selling_price_dict.get(price_key, 0)
-                self.__price_matrix[latency_idx, server_idx] = selling_price
+                selling_price = self.selling_price_dict.get(price_key, 0)
+                self.price_matrix[latency_idx, server_idx] = selling_price
 
     def _load_demand_data(self, file_path: str, seed):
         """
@@ -232,18 +232,18 @@ class DiffSolution:
             demand_values = demands[latency].astype(float).values
 
             # 使用索引将需求值填充到 demand_matrix 中
-            self.__demand_matrix[time_indices, latency_idx, server_indices] = demand_values
+            self.demand_matrix[time_indices, latency_idx, server_indices] = demand_values
 
     def _load_data(self):
         """
         加载售价数据
         """
         # 加载售价数据
-        self.__selling_prices_df = pd.read_csv('./data/selling_prices.csv')
-        self.__selling_prices_df['server_generation'] = self.__selling_prices_df['server_generation'].astype(str)
-        self.__selling_prices_df['latency_sensitivity'] = self.__selling_prices_df['latency_sensitivity'].astype(str)
+        self.selling_prices_df = pd.read_csv('./data/selling_prices.csv')
+        self.selling_prices_df['server_generation'] = self.selling_prices_df['server_generation'].astype(str)
+        self.selling_prices_df['latency_sensitivity'] = self.selling_prices_df['latency_sensitivity'].astype(str)
         # 建立 (server_generation, latency_sensitivity) 的售价字典
-        self.__selling_price_dict = self.__selling_prices_df.set_index(['server_generation', 'latency_sensitivity'])['selling_price'].to_dict()
+        self.selling_price_dict = self.selling_prices_df.set_index(['server_generation', 'latency_sensitivity'])['selling_price'].to_dict()
 
     def discard_server_changes(self):
         """
@@ -257,15 +257,15 @@ class DiffSolution:
         将当前对服务器的变动操作，应用到解中。
         """
         # 将 blackboard 中的数据正式写入到解的内部状态
-        self.__lifespan = self.__blackboard.lifespan
-        self.__lifespan_percentage_sum = self.__blackboard.lifespan_percentage_sum
-        self.__fleetsize = self.__blackboard.fleetsize
-        self.__capacity_matrix = self.__blackboard.capacity_matrix
-        self.__cost = self.__blackboard.cost
-        self.__utilization_matrix = self.__blackboard.utilization_matrix
-        self.__average_utilization = self.__blackboard.average_utilization
-        self.__average_lifespan = self.__blackboard.average_lifespan
-        self.__satisfaction_matrix = self.__blackboard.satisfaction_matrix
+        self.lifespan = self.__blackboard.lifespan
+        self.lifespan_percentage_sum = self.__blackboard.lifespan_percentage_sum
+        self.fleetsize = self.__blackboard.fleetsize
+        self.capacity_matrix = self.__blackboard.capacity_matrix
+        self.cost = self.__blackboard.cost
+        self.utilization_matrix = self.__blackboard.utilization_matrix
+        self.average_utilization = self.__blackboard.average_utilization
+        self.average_lifespan = self.__blackboard.average_lifespan
+        self.satisfaction_matrix = self.__blackboard.satisfaction_matrix
         # 更新 server_map
         diff_info = self.__diff_info
         if diff_info.quantity == 0:
@@ -285,16 +285,16 @@ class DiffSolution:
         if self.__blackboard is None:
             # Initialize blackboard
             self.__blackboard = DiffBlackboard(
-                lifespan=self.__lifespan.copy(),
-                lifespan_percentage_sum=self.__lifespan_percentage_sum.copy(),
-                fleetsize=self.__fleetsize.copy(),
-                capacity_matrix=self.__capacity_matrix.copy(),
-                cost=self.__cost.copy(),
-                satisfaction_matrix=self.__satisfaction_matrix.copy(),
+                lifespan=self.lifespan.copy(),
+                lifespan_percentage_sum=self.lifespan_percentage_sum.copy(),
+                fleetsize=self.fleetsize.copy(),
+                capacity_matrix=self.capacity_matrix.copy(),
+                cost=self.cost.copy(),
+                satisfaction_matrix=self.satisfaction_matrix.copy(),
                 changed_capacity_indices=set(),
-                utilization_matrix=self.__utilization_matrix.copy(),
-                average_utilization=self.__average_utilization.copy(),
-                average_lifespan=self.__average_lifespan.copy(),
+                utilization_matrix=self.utilization_matrix.copy(),
+                average_utilization=self.average_utilization.copy(),
+                average_lifespan=self.average_lifespan.copy(),
                 changed_time_steps=set()
             )
         self.__diff_info = diff_info
@@ -386,7 +386,7 @@ class DiffSolution:
         if 0 <= purchase_time < TIME_STEPS:
             cost_array[purchase_time] += purchase_cost
             if self.__verbose:
-                self.__cost_details[purchase_time]['purchase_cost'] += purchase_cost
+                self.cost_details[purchase_time]['purchase_cost'] += purchase_cost
 
     def _update_moving_cost(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign: int):
         """
@@ -429,7 +429,7 @@ class DiffSolution:
                 cost_array[time_start_energy:time_end_energy] += energy_cost_per_time_step
                 if self.__verbose:
                     for t in range(time_start_energy, time_end_energy):
-                                    self.__cost_details[t]['energy_cost'] += energy_cost_per_time_step
+                                    self.cost_details[t]['energy_cost'] += energy_cost_per_time_step
 
     def _update_maintenance_cost(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign: int):
         """
@@ -464,7 +464,7 @@ class DiffSolution:
 
         if self.__verbose:
             for t in range(time_start, time_end):
-                self.__cost_details[t]['maintenance_cost'] += maintenance_cost_per_time_step[t - time_start]
+                self.cost_details[t]['maintenance_cost'] += maintenance_cost_per_time_step[t - time_start]
 
     def _recalculate_satisfaction(self, blackboard: DiffBlackboard):
         """
@@ -482,7 +482,7 @@ class DiffSolution:
         server_generation_idxs = changed_indices[:, 2]
 
         # 获取需求和容量数据
-        demand_values = self.__demand_matrix[time_steps, latency_idxs, server_generation_idxs]
+        demand_values = self.demand_matrix[time_steps, latency_idxs, server_generation_idxs]
         capacity_values = blackboard.capacity_matrix[time_steps, latency_idxs, server_generation_idxs]
 
         # 计算需求满足值
@@ -589,7 +589,7 @@ class DiffSolution:
         return blackboard.average_lifespan
 
     def _calculate_revenue(self, blackboard: DiffBlackboard):
-        revenue = np.sum(blackboard.satisfaction_matrix * self.__price_matrix, axis=(1, 2))
+        revenue = np.sum(blackboard.satisfaction_matrix * self.price_matrix, axis=(1, 2))
         return revenue  # 返回每个时间步的收入
 
     def _calculate_profit(self, blackboard: DiffBlackboard):
@@ -634,13 +634,13 @@ class DiffSolution:
                     'L': round(average_lifespan[t], 2),
                     'P': round(profit[t], 2),
                     'Size': int(blackboard.fleetsize[t]),
-                    '购买费用': round(self.__cost_details[t]['purchase_cost'], 2),
-                    '能耗费用': round(self.__cost_details[t]['energy_cost'], 2),
-                    '维护费用': round(self.__cost_details[t]['maintenance_cost'], 2),
+                    '购买费用': round(self.cost_details[t]['purchase_cost'], 2),
+                    '能耗费用': round(self.cost_details[t]['energy_cost'], 2),
+                    '维护费用': round(self.cost_details[t]['maintenance_cost'], 2),
                     '总费用': round(blackboard.cost[t], 2),
                     '总收入': round(self._calculate_revenue(blackboard)[t], 2),
                 })
-                self.__print(f"Time Step {t + 1} - Capacity Combinations: {self.__capacity_combinations[t]}")
+                self.__print(f"Time Step {t + 1} - Capacity Combinations: {self.capacity_combinations[t]}")
         return evaluation_result
     
     def diff_evaluation(self):
