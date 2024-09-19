@@ -34,6 +34,8 @@ class SlotAvailabilityManager:
         return np.min(slots)
 
     def update_slots(self, start_time, end_time, data_center, slots_needed, operation='buy'):
+        if slots_needed == 0:
+            return
         # 前闭后开: [start_time, end_time)
         if operation == 'buy':
             self.datacenter_slots[data_center][start_time:end_time] -= slots_needed
@@ -58,8 +60,8 @@ class SlotAvailabilityManager:
         self.pending_updates.clear()
 
     def can_accommodate_servers(self, servers: Dict[str, ServerInfo]) -> bool:
-        # 初始化一个临时的插槽剩余容量快照，用总容量填充
-        temp_datacenter_slots = {dc: np.full(self.time_steps, self.total_slots[dc], dtype=int) for dc in self.datacenter_slots.keys()}
+        # 创建一个空的插槽占用情况，与 self.datacenter_slots 的结构一致
+        expected_datacenter_slots = {dc: np.zeros(self.time_steps, dtype=int) for dc in self.datacenter_slots.keys()}
 
         for server_id, server in servers.items():
             if server.slots_size is None:
@@ -90,19 +92,26 @@ class SlotAvailabilityManager:
                 slots_needed = server.quantity * server.slots_size
 
                 # 检查目标数据中心是否存在
-                if dc not in self.total_slots:
+                if dc not in expected_datacenter_slots:
                     raise ValueError(f"数据中心 {dc} 不存在。")
 
-                # 在临时插槽中减少剩余容量
-                temp_datacenter_slots[dc][start_time:end_time] -= slots_needed
+                # 在期望的插槽占用中增加占用量
+                expected_datacenter_slots[dc][start_time:end_time] += slots_needed
 
-                # 检查是否超过容量（即剩余容量是否为负数）
-                if np.any(temp_datacenter_slots[dc][start_time:end_time] < 0):
-                    self._print(f"服务器 {server_id} 在数据中心 {dc} 的时间范围 {start_time} 到 {end_time} 超过插槽容量。需要 {slots_needed}，当前剩余容量 {temp_datacenter_slots[dc][start_time:end_time]}")                    
-                    return False
+        # 比较期望的插槽占用情况与实际的插槽使用情况
+        for dc in self.datacenter_slots.keys():
+            # 计算实际占用的插槽数量
+            actual_used_slots = self.total_slots[dc] - self.datacenter_slots[dc]
+            # 如果期望的占用与实际占用不一致，则返回 False
+            if not np.array_equal(expected_datacenter_slots[dc], actual_used_slots):
+                self._print(f"数据中心 {dc} 的期望插槽占用与实际不一致。")
+                self._print(f"期望的占用：{expected_datacenter_slots[dc]}")
+                self._print(f"实际的占用：{actual_used_slots}")
+                self._print(f'占用差值：{actual_used_slots - expected_datacenter_slots[dc]}')
+                return False
 
-        # 如果所有服务器都可以被容纳
-        self._print("所有服务器都可以被独立容纳。")
+        # 所有数据中心的插槽占用情况都一致
+        self._print("所有服务器的插槽占用与当前的插槽使用情况一致。")
         return True
     
     def find_time_step(self, data_center, slots_needed, time_range_start, time_range_end, sign = 1):

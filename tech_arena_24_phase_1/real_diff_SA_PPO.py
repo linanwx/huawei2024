@@ -21,13 +21,12 @@ from threading import Thread
 from real_diff_SA_basic import SA_status, SlotAvailabilityManager, OperationContext
 
 TIME_STEPS = 168
-DEBUG = True
+DEBUG = False
 
 # Automatically create output directory
 output_dir = './output/'
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
-
 
 class NeighborhoodOperation(ABC):
     def __init__(self, context: OperationContext):
@@ -703,6 +702,156 @@ class RemoveServerOperation(SA_NeighborhoodOperation):
                 return False
         return True
     
+class MergeServersOperation(SA_NeighborhoodOperation):
+    def execute(self):
+        # Need at least two servers to attempt merging
+        server_map = self.context.solution.server_map
+        if len(server_map) < 2:
+            self._print("Not enough servers to perform merge operation")
+            return False
+
+        # Group servers by server_generation to find pairs of the same type
+        servers_by_generation = {}
+        for server in server_map.values():
+            gen = server.server_generation
+            servers_by_generation.setdefault(gen, []).append(server)
+
+        # Collect potential pairs for merging
+        potential_pairs = []
+        for servers in servers_by_generation.values():
+            if len(servers) < 2:
+                continue
+            # Consider all pairs of servers of the same type
+            for i in range(len(servers)):
+                for j in range(i+1, len(servers)):
+                    s1, s2 = servers[i], servers[j]
+                    if s1.dismiss_time >= s2.buy_and_move_info[0].time_step:
+                        continue
+                    # Check if s1's max dismiss time is after s2's dismiss time
+                    max_dismiss_time_s1 = min(s1.buy_and_move_info[0].time_step + s1.life_expectancy, TIME_STEPS)
+                    if max_dismiss_time_s1 < s2.dismiss_time:
+                        continue
+                    potential_pairs.append((s1, s2))
+
+        if not potential_pairs:
+            self._print("No suitable server pairs found for merging")
+            return False
+
+        # Randomly select a pair to attempt merging
+        s1, s2 = random.choice(potential_pairs)
+        self._print(f"Attempting to merge Server {s1.server_id} and Server {s2.server_id}")
+        self._print(f"Server 1: {s1}")
+        self._print(f"Server 2: {s2}")
+
+        # Begin merging process
+        try:
+            return self.merge_servers(s1, s2)
+        except Exception as e:
+            self._print(f"Error during merge: {e}", color=Fore.RED)
+            return False
+
+    def merge_servers(self, s1: ServerInfo, s2: ServerInfo):
+        # Suppose the first server's dismiss time is t1, the second server's purchase time is t2
+        t1 = s1.dismiss_time
+        t2 = s2.buy_and_move_info[0].time_step
+
+        # Check if there are enough slots between t1 and t2
+        last_move_info_s1 = s1.buy_and_move_info[-1]
+        data_center1 = last_move_info_s1.target_datacenter
+        slots_needed = min(s1.quantity * s1.slots_size, s2.quantity * s2.slots_size)
+
+        if not self.context.slot_manager.check_availability(t1, t2, data_center1, slots_needed):
+            self._print(f"Not enough slots in data center {data_center1} between {t1} and {t2} for merging")
+            return False
+
+        # Copy server 1 into s1_new
+        s1_new = copy.deepcopy(s1)
+        s2_new = copy.deepcopy(s2)
+        s1_new.quantity = min(s1.quantity, s2.quantity)
+
+        # Extend s1_new's dismiss_time to s2's dismiss_time or its maximum life expectancy
+        max_dismiss_time_s1 = min(s1.buy_and_move_info[0].time_step + s1.life_expectancy, TIME_STEPS)
+        desired_dismiss_time = min(s2.dismiss_time, max_dismiss_time_s1)
+        s1_new.dismiss_time = desired_dismiss_time
+
+        # Transfer s2's purchase and migration records into s1_new
+        first_move_info_s2 = s2.buy_and_move_info[0]
+        data_center2 = first_move_info_s2.target_datacenter
+
+        s2_buy_and_move_info = s2.buy_and_move_info.copy()
+        if data_center1 == data_center2:
+            # If the last move of s1_new and the first move of s2 are in the same data center, merge them
+            # Remove the last move_info from s1_new
+            s2_buy_and_move_info.pop()
+        # Append s2's buy_and_move_info to s1_new
+        s1_new.buy_and_move_info.extend(s2_buy_and_move_info)
+
+        # Re-initialize cumulative durations
+        s1_new.init_buy_and_move_info()
+
+        # Ensure move times are strictly increasing
+        if not self.check_time_sequence(s1_new):
+            self._print("Move times are not strictly increasing after merging")
+            return False
+
+        # Copy server 2 into s2_new and set its quantity to 0
+        s2_new.quantity = 0
+        
+        # Apply time adjustments
+        self._print(f'Server 1 New: {s1_new}')
+        self._print(f'Server 2 New: {s2_new}')
+
+        if not self.apply_time_adjustment(s1_new, s1):
+            self._print("Failed to apply time adjustment to merged server")
+            return False
+        if not self.apply_time_adjustment(s2_new, s2):
+            self._print("Failed to apply time adjustment to server being removed")
+            return False
+        self._print(f'self.context.solution.server_map.length: {len(self.context.solution.server_map)}')
+        self._print(f"Successfully merged server {s2.server_id} into server {s1_new.server_id}")
+        return True
+    
+    def apply_time_adjustment(self, server_copy:ServerInfo, original_server:ServerInfo):
+        # slots_needed = server_copy.quantity * server_copy.slots_size
+
+        # 释放原先的插槽预订
+        self.push_slot_update(original_server, original_server.quantity * original_server.slots_size , 'cancel')
+
+        # 预订新的插槽
+        if not self.push_slot_update(server_copy, server_copy.quantity * server_copy.slots_size, 'buy'):
+            return False
+
+        # 应用服务器变更
+        self.context.solution.apply_server_change(server_copy)
+        return True
+
+    def push_slot_update(self, server:ServerInfo, slots_needed, operation):
+        if slots_needed == 0:
+            return True
+        # 遍历服务器的所有时间段，更新插槽
+        for i, move_info in enumerate(server.buy_and_move_info):
+            start_time = move_info.time_step
+            if i + 1 < len(server.buy_and_move_info):
+                end_time = server.buy_and_move_info[i + 1].time_step
+            else:
+                end_time = server.dismiss_time
+            data_center = move_info.target_datacenter
+
+            self.context.slot_manager.push_slot_update(start_time, end_time, data_center, slots_needed, operation)
+        return True
+
+    def check_time_sequence(self, server: ServerInfo) -> bool:
+        """
+        Ensures that move times in server's buy_and_move_info are strictly increasing.
+        """
+        times = [move_info.time_step for move_info in server.buy_and_move_info]
+        if not all(earlier < later for earlier, later in zip(times, times[1:])):
+            self._print("Move times are not strictly increasing")
+            return False
+        if server.dismiss_time <= times[-1]:
+            self._print("Dismiss time is not after last move time")
+            return False
+        return True
 
 class SimulatedAnnealing:
     def __init__(self, slot_manager, servers_df, id_gen, solution: DiffSolution, seed, initial_temp, min_temp, alpha, max_iter, verbose=False):
@@ -744,33 +893,54 @@ class SimulatedAnnealing:
         self.total_weight = 0.0
 
         # 注册操作
-        # self.register_operation(
-        #     BuyServerOperation(context=self.context),
-        #     weight=0.4
-        # )
-        # self.register_operation(
-        #     MoveServerOperation(context=self.context),
-        #     weight=0.4
-        # )
-        # self.register_operation(
-        #     AdjustQuantityOperation(context=self.context),
-        #     weight=0.2
-        # )
-        # self.register_operation(
-        #     AdjustTimeOperation(context=self.context),
-        #     weight=0.8
-        # )
-        # self.register_operation(
-        #     RemoveServerOperation(context=self.context),
-        #     weight=0.2
-        # )
         self.register_operation(
-            PPO_BuyServerOperation(context=self.context, env=self.env, model=self.model),
+            BuyServerOperation(context=self.context),
             weight=0.4
         )
+        self.register_operation(
+            MoveServerOperation(context=self.context),
+            weight=0.4
+        )
+        self.register_operation(
+            AdjustQuantityOperation(context=self.context),
+            weight=0.2
+        )
+        self.register_operation(
+            AdjustTimeOperation(context=self.context),
+            weight=0.8
+        )
+        self.register_operation(
+            RemoveServerOperation(context=self.context),
+            weight=0.2
+        )
+        self.register_operation(
+            MergeServersOperation(context=self.context),
+            weight=0.3  # Adjust the weight as desired
+        )
+        # self.register_operation(
+        #     PPO_BuyServerOperation(context=self.context, env=self.env, model=self.model),
+        #     weight=0.4
+        # )
 
         self.best_solution_server_map = copy.deepcopy(self.solution.server_map)
         self.best_score = float('-inf')
+        self.operation_record = {}
+
+    def record_operation(self, operation: NeighborhoodOperation, success: bool):
+        operation_name = operation.__class__.__name__
+        if operation_name not in self.operation_record:
+            self.operation_record[operation_name] = {'total': 0, 'success': 0}
+        self.operation_record[operation_name]['total'] += 1
+        if success:
+            self.operation_record[operation_name]['success'] += 1
+
+    def print_operation_record(self):
+        self._print("Operation record:")
+        for operation_name, record in self.operation_record.items():
+            total = record['total']
+            success = record['success']
+            success_rate = success / total if total > 0 else 0
+            self._print(f"{operation_name}: {success}/{total} ({success_rate:.2f})")
 
     def _print(self, *args, color=None, **kwargs):
         if self.status.verbose:
@@ -794,6 +964,7 @@ class SimulatedAnnealing:
         operation = self.choose_operation()
         success, score  = operation.execute_and_evaluate()
         self._print(f"Operation: {operation.__class__.__name__}, Score: {score:.5e}, Success: {success}")
+        self.record_operation(operation, success)
         return score, success, operation
 
     def acceptance_probability(self, old_score, new_score):
@@ -807,13 +978,14 @@ class SimulatedAnnealing:
             self._print(f"Accepted new solution with score {new_score:.5e}", color=Fore.BLUE)
             # 接受新解
             self.solution.commit_server_changes()
+            self._print(f'self.solution.length: {len(self.solution.server_map)}')
             # 检查解是否合法
+            self.slot_manager.apply_pending_updates()
             if DEBUG:
                 result = self.slot_manager.can_accommodate_servers(self.solution.server_map)
                 if not result:
                     self._print("New solution is invalid", color=Fore.RED)
                     raise ValueError("New solution is invalid")
-            self.slot_manager.apply_pending_updates()
             if new_score > self.status.best_score:
                 self.best_solution_server_map = update_best_solution(self.best_solution_server_map, self.solution.server_map)
                 self.status.best_score = new_score
@@ -831,8 +1003,8 @@ class SimulatedAnnealing:
         iteration = 0  # 用于记录有效迭代次数
         while iteration < self.status.max_iter:
             self._print(f"<------ Iteration {iteration}, Temperature {self.status.current_temp:.2f} Bestscore {self.status.best_score:.5e} ------->", color=Fore.CYAN)
-            
-            new_score, success, operation = self.generate_neighbor()  # 生成一个邻域解
+            self.print_operation_record()
+            new_score, success, _ = self.generate_neighbor()  # 生成一个邻域解
             if success:
                 accept_prob = self.acceptance_probability(self.status.current_score, new_score)
                 print(f"Iteration: {iteration}. New best solution for {self.status.seed} with score {self.status.best_score:.5e}")
@@ -866,8 +1038,8 @@ def get_my_solution(seed, verbose=False):
         seed=seed,
         initial_temp=200000,
         min_temp=100,
-        alpha=0.9999,
-        max_iter=70000,
+        alpha=0.99999,
+        max_iter=200000,
         verbose=verbose
     )
     best_solution_server_map, best_score = sa.run()
@@ -878,6 +1050,6 @@ def get_my_solution(seed, verbose=False):
 if __name__ == '__main__':
     start = time.time()
     seed = 3329
-    best_solution_server_map, best_score = get_my_solution(seed, verbose=True)
+    best_solution_server_map, best_score = get_my_solution(seed, verbose=True if DEBUG else False)
     end = time.time()
     print(f"Elapsed time: {end - start:.4f} seconds")

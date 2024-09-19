@@ -168,7 +168,7 @@ class DiffSolution:
         # 差分黑板，用于暂存变动
         self.__blackboard: DiffBlackboard = None
         # 当前的差分信息
-        self.__diff_info: ServerInfo = None
+        self.__diff_info: List[ServerInfo] = []
         # 初始化利用率矩阵
         self.utilization_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
         # 初始化平均利用率
@@ -249,7 +249,7 @@ class DiffSolution:
         """
         放弃当前对服务器的变动操作。
         """
-        self.__diff_info = None
+        self.__diff_info = []
         self.__blackboard = None
 
     def commit_server_changes(self):
@@ -267,16 +267,16 @@ class DiffSolution:
         self.average_lifespan = self.__blackboard.average_lifespan
         self.satisfaction_matrix = self.__blackboard.satisfaction_matrix
         # 更新 server_map
-        diff_info = self.__diff_info
-        if diff_info.quantity == 0:
-            # 如果数量为0，表示删除该服务器
-            if diff_info.server_id in self.server_map:
-                del self.server_map[diff_info.server_id]
-        else:
-            # 添加或更新服务器
-            self.server_map[diff_info.server_id] = diff_info
+        for diff_info in self.__diff_info:
+            if diff_info.quantity == 0:
+                # 如果数量为0，表示删除该服务器
+                if diff_info.server_id in self.server_map:
+                    del self.server_map[diff_info.server_id]
+            else:
+                # 添加或更新服务器
+                self.server_map[diff_info.server_id] = diff_info
         # 清空当前的差分信息和黑板
-        self.__diff_info = None
+        self.__diff_info = []
         self.__blackboard = None
 
     def apply_server_change(self, diff_info: ServerInfo):
@@ -297,7 +297,7 @@ class DiffSolution:
                 average_lifespan=self.average_lifespan.copy(),
                 changed_time_steps=set()
             )
-        self.__diff_info = diff_info
+        self.__diff_info.append(diff_info) 
         blackboard = self.__blackboard
         original_server_info = self.server_map.get(diff_info.server_id)
 
