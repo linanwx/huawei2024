@@ -192,12 +192,64 @@ class DiffSolution:
     def _init_price_matrix(self):
         num_latencies = len(LATENCY_SENSITIVITY_MAP)
         num_servers = len(SERVER_GENERATION_MAP)
-        self.price_matrix = np.zeros((num_latencies, num_servers), dtype=float)
-        for latency_key, latency_idx in LATENCY_SENSITIVITY_MAP.items():
-            for server_key, server_idx in SERVER_GENERATION_MAP.items():
-                price_key = (server_key, latency_key)
-                selling_price = self.selling_price_dict.get(price_key, 0)
-                self.price_matrix[latency_idx, server_idx] = selling_price
+        self.price_matrix = np.zeros((TIME_STEPS, num_latencies, num_servers), dtype=float)
+        
+        for t in range(TIME_STEPS):
+            for latency_key, latency_idx in LATENCY_SENSITIVITY_MAP.items():
+                for server_key, server_idx in SERVER_GENERATION_MAP.items():
+                    price_key = (server_key, latency_key)
+                    selling_price = self.selling_price_dict.get(price_key, 0)
+                    self.price_matrix[t, latency_idx, server_idx] = selling_price
+        
+        self.original_price_matrix = self.price_matrix.copy()
+
+    def _load_price_elasticity(self, file_path="price_elasticity_of_demand.csv"):
+        """
+        读取 price_elasticity_of_demand.csv 并将其转换为 numpy 数据，保存到类中。
+        """
+        # 读取 CSV 文件
+        df = pd.read_csv(file_path)
+        
+        # 创建弹性矩阵，维度与 self.demand_matrix 一致
+        num_latencies = len(LATENCY_SENSITIVITY_MAP)
+        num_servers = len(SERVER_GENERATION_MAP)
+        
+        self.price_elasticity_matrix = np.zeros((num_latencies, num_servers), dtype=float)
+        
+        # 遍历 CSV 数据，将其填充到 price_elasticity_matrix 中
+        for _, row in df.iterrows():
+            latency_key = row['latency_sensitivity']
+            server_key = row['server_generation']
+            
+            # 获取对应的索引
+            latency_idx = LATENCY_SENSITIVITY_MAP.get(latency_key)
+            server_idx = SERVER_GENERATION_MAP.get(server_key)
+            
+            if latency_idx is not None and server_idx is not None:
+                self.price_elasticity_matrix[latency_idx, server_idx] = row['elasticity']
+        
+        print("价格弹性矩阵加载完成。")
+
+    def adjust_price_ratio(self, start_time, end_time, latency_sensitivity_key, server_type_key, ratio):
+        # 获取时延敏感性和服务器类型的索引
+        latency_idx = LATENCY_SENSITIVITY_MAP.get(latency_sensitivity_key)
+        server_idx = SERVER_GENERATION_MAP.get(server_type_key)
+
+        # 确保时延敏感性和服务器类型键是合法的
+        if latency_idx is None:
+            raise ValueError(f"无效的时延敏感性键: {latency_sensitivity_key}")
+        if server_idx is None:
+            raise ValueError(f"无效的服务器类型键: {server_type_key}")
+
+        # 确保时间步区间在合法范围内
+        if start_time < 0 or end_time > TIME_STEPS or start_time >= end_time:
+            raise ValueError(f"时间区间 [{start_time}, {end_time}) 不合法，必须在 [0, {TIME_STEPS}) 之间且 start_time < end_time")
+
+        # 基于 self.price_matrix 现有价格进行比例调整
+        self.price_matrix[start_time:end_time, latency_idx, server_idx] *= (1 + ratio)
+
+        print(f"在时间步区间 [{start_time}, {end_time})，按比例 {ratio:.2f} 调整了延迟敏感性 {latency_sensitivity_key} 和服务器类型 {server_type_key} 的价格。")
+
 
     def _load_demand_data(self, file_path: str, seed):
         """
@@ -701,6 +753,10 @@ class DiffSolution:
             print("All same")
         else:
             raise ValueError("Not same")
+        
+    def change_price_setting(self, time_step:int, latency_sensitivity:str, server_generation:str, selling_price:float):
+        pass
+
 
 def export_solution_to_json(server_map: Dict[str, ServerInfo], file_path: str):
     solution_data = []
