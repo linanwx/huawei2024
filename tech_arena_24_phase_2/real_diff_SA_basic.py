@@ -1,5 +1,7 @@
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict
+from typing import Dict, Tuple
+from colorama import Style
 import numpy as np
 import pandas as pd
 from idgen import ThreadSafeIDGenerator
@@ -156,3 +158,18 @@ class OperationContext:
     sa_status: 'SA_status' 
     verbose: bool = False
 
+class NeighborhoodOperation(ABC):
+    def __init__(self, context: OperationContext):
+        self.context = context
+
+    def _print(self, *args, color=None, **kwargs):
+        if self.context.verbose:
+            # 设置颜色
+            if color:
+                print(f"{color}{' '.join(map(str, args))}{Style.RESET_ALL}", **kwargs)
+            else:
+                print(*args, **kwargs)
+
+    @abstractmethod
+    def execute_and_evaluate(self) -> Tuple[bool, float]:
+        pass

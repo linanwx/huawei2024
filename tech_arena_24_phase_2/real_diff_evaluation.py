@@ -132,17 +132,17 @@ class ServerInfo:
 
 @dataclass
 class DiffBlackboard:
-    lifespan_percentage_sum: np.ndarray
-    lifespan: np.ndarray
-    fleetsize: np.ndarray
+    # lifespan_percentage_sum: np.ndarray
+    # lifespan: np.ndarray
+    # fleetsize: np.ndarray
     capacity_matrix: np.ndarray
     cost: np.ndarray
     satisfaction_matrix: np.ndarray
-    utilization_matrix: np.ndarray
-    average_utilization: np.ndarray
-    average_lifespan: np.ndarray
+    # utilization_matrix: np.ndarray
+    # average_utilization: np.ndarray
+    # average_lifespan: np.ndarray
     price_matrix: np.ndarray
-    changed_time_steps: set = field(default_factory=set)
+    # changed_time_steps: set = field(default_factory=set)
 
 class DiffSolution:
     def __init__(self, seed, verbose=False):
@@ -310,14 +310,14 @@ class DiffSolution:
         将当前对服务器的变动操作，应用到解中。
         """
         # 将 blackboard 中的数据正式写入到解的内部状态
-        self.lifespan = self.__blackboard.lifespan
-        self.lifespan_percentage_sum = self.__blackboard.lifespan_percentage_sum
-        self.fleetsize = self.__blackboard.fleetsize
+        # self.lifespan = self.__blackboard.lifespan
+        # self.lifespan_percentage_sum = self.__blackboard.lifespan_percentage_sum
+        # self.fleetsize = self.__blackboard.fleetsize
         self.capacity_matrix = self.__blackboard.capacity_matrix
         self.cost = self.__blackboard.cost
-        self.utilization_matrix = self.__blackboard.utilization_matrix
-        self.average_utilization = self.__blackboard.average_utilization
-        self.average_lifespan = self.__blackboard.average_lifespan
+        # self.utilization_matrix = self.__blackboard.utilization_matrix
+        # self.average_utilization = self.__blackboard.average_utilization
+        # self.average_lifespan = self.__blackboard.average_lifespan
         self.satisfaction_matrix = self.__blackboard.satisfaction_matrix
         self.price_matrix = self.__blackboard.price_matrix
         # 更新 server_map
@@ -337,22 +337,22 @@ class DiffSolution:
         if self.__blackboard is None:
             # Initialize blackboard
             self.__blackboard = DiffBlackboard(
-                lifespan=self.lifespan.copy(),
-                lifespan_percentage_sum=self.lifespan_percentage_sum.copy(),
-                fleetsize=self.fleetsize.copy(),
+                # lifespan=self.lifespan.copy(),
+                # lifespan_percentage_sum=self.lifespan_percentage_sum.copy(),
+                # fleetsize=self.fleetsize.copy(),
                 capacity_matrix=self.capacity_matrix.copy(),
                 cost=self.cost.copy(),
                 satisfaction_matrix=self.satisfaction_matrix.copy(),
-                utilization_matrix=self.utilization_matrix.copy(),
-                average_utilization=self.average_utilization.copy(),
-                average_lifespan=self.average_lifespan.copy(),
-                changed_time_steps=set(),
+                # utilization_matrix=self.utilization_matrix.copy(),
+                # average_utilization=self.average_utilization.copy(),
+                # average_lifespan=self.average_lifespan.copy(),
+                # changed_time_steps=set(),
                 price_matrix=self.price_matrix.copy()
             )
 
     def apply_server_change(self, diff_info: ServerInfo):
         # print(f'apply_server_change: {diff_info}')
-        diff_info.init_buy_and_move_info()
+        # diff_info.init_buy_and_move_info()
         if diff_info.dismiss_time > diff_info.buy_and_move_info[0].time_step + diff_info.life_expectancy:
             raise ValueError("Dismiss time cannot exceed maximum lifespan.")
         self._init_blackboard()
@@ -373,9 +373,9 @@ class DiffSolution:
         应用指定的差分信息，更新黑板数据，不修改解的内部状态。
         """
         # 调整时间步骤寿命和寿命百分比总和
-        self._update_lifespan(blackboard, diff_info, sign=sign)
+        # self._update_lifespan(blackboard, diff_info, sign=sign)
         # 调整时间步骤服务器数量
-        self._update_fleet_size(blackboard, diff_info, sign=sign)
+        # self._update_fleet_size(blackboard, diff_info, sign=sign)
         # 调整容量矩阵
         self._update_capacity(blackboard, diff_info, sign=sign)
         # 购买成本
@@ -387,53 +387,53 @@ class DiffSolution:
         # 维护成本
         self._update_maintenance_cost(blackboard, diff_info, sign=sign)
 
-    def _update_lifespan(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign=1):
-        """
-        更新服务器寿命和寿命百分比总和。
-        """
-        time_start = diff_info.buy_and_move_info[0].time_step
-        time_end = diff_info.dismiss_time
-        lifespan_data = blackboard.lifespan
-        lifespan_percentage_sum = blackboard.lifespan_percentage_sum
+    # def _update_lifespan(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign=1):
+    #     """
+    #     更新服务器寿命和寿命百分比总和。
+    #     """
+    #     time_start = diff_info.buy_and_move_info[0].time_step
+    #     time_end = diff_info.dismiss_time
+    #     lifespan_data = blackboard.lifespan
+    #     lifespan_percentage_sum = blackboard.lifespan_percentage_sum
 
-        # 确保时间范围在数组索引范围内
-        time_start = max(0, time_start)
-        time_end = min(TIME_STEPS, time_end)
+    #     # 确保时间范围在数组索引范围内
+    #     time_start = max(0, time_start)
+    #     time_end = min(TIME_STEPS, time_end)
 
-        if time_end > time_start:
-            # 计算寿命增量
-            lifespan_steps = np.arange(1, time_end - time_start + 1, dtype=float)
-            increments = lifespan_steps * diff_info.quantity * sign
-            # 更新寿命数据
-            lifespan_data[time_start:time_end] += increments
-            # 计算寿命百分比增量
-            life_expectancy = diff_info.life_expectancy
-            lifespan_percentages = (lifespan_steps / life_expectancy) * diff_info.quantity * sign
-            # 更新寿命百分比总和
-            lifespan_percentage_sum[time_start:time_end] += lifespan_percentages
-            # 记录受影响的时间步骤
-            blackboard.changed_time_steps.update(range(time_start, time_end))
-        else:
-            raise ValueError("结束时间必须大于开始时间。")
+    #     if time_end > time_start:
+    #         # 计算寿命增量
+    #         lifespan_steps = np.arange(1, time_end - time_start + 1, dtype=float)
+    #         increments = lifespan_steps * diff_info.quantity * sign
+    #         # 更新寿命数据
+    #         lifespan_data[time_start:time_end] += increments
+    #         # 计算寿命百分比增量
+    #         life_expectancy = diff_info.life_expectancy
+    #         lifespan_percentages = (lifespan_steps / life_expectancy) * diff_info.quantity * sign
+    #         # 更新寿命百分比总和
+    #         lifespan_percentage_sum[time_start:time_end] += lifespan_percentages
+    #         # 记录受影响的时间步骤
+    #         blackboard.changed_time_steps.update(range(time_start, time_end))
+    #     else:
+    #         raise ValueError("结束时间必须大于开始时间。")
 
-    def _update_fleet_size(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign=1):
-        """
-        更新服务器数量。
-        """
-        time_start = diff_info.buy_and_move_info[0].time_step
-        time_end = diff_info.dismiss_time
+    # def _update_fleet_size(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign=1):
+    #     """
+    #     更新服务器数量。
+    #     """
+    #     time_start = diff_info.buy_and_move_info[0].time_step
+    #     time_end = diff_info.dismiss_time
 
-        fleet_size = blackboard.fleetsize
+    #     fleet_size = blackboard.fleetsize
 
-        # 确保时间范围在数组索引范围内
-        time_start = max(0, time_start)
-        time_end = min(TIME_STEPS, time_end)
+    #     # 确保时间范围在数组索引范围内
+    #     time_start = max(0, time_start)
+    #     time_end = min(TIME_STEPS, time_end)
 
-        # 更新服务器数量
-        fleet_size[time_start:time_end] += diff_info.quantity * sign
+    #     # 更新服务器数量
+    #     fleet_size[time_start:time_end] += diff_info.quantity * sign
 
-        # 记录受影响的时间步骤
-        blackboard.changed_time_steps.update(range(time_start, time_end))
+    #     # 记录受影响的时间步骤
+    #     blackboard.changed_time_steps.update(range(time_start, time_end))
 
     def _update_buy_cost(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign: int):
         """
@@ -597,7 +597,7 @@ class DiffSolution:
                 0.0
             )
         # 更新 blackboard 的 utilization_matrix
-        blackboard.utilization_matrix[time_steps, latency_idxs, server_generation_idxs] = utilization_values
+        # blackboard.utilization_matrix[time_steps, latency_idxs, server_generation_idxs] = utilization_values
 
     def _adjust_capacity_by_failure_rate_approx(self, x, avg_failure_rate=FAILURE_RATE):
         return x * (1 - avg_failure_rate)
@@ -631,54 +631,54 @@ class DiffSolution:
                 print(time_start, time_end, latency_sensitivity, server_generation_idx)
             capacity_matrix[time_start:time_end, latency_sensitivity, server_generation_idx] += capacity
 
-    def _calculate_average_utilization(self, blackboard: DiffBlackboard):
-        """
-        重新计算所有时间步骤的平均利用率，不再依赖 changed_indices。
-        """
-        utilization_matrix = blackboard.utilization_matrix
-        capacity_matrix = blackboard.capacity_matrix
+    # def _calculate_average_utilization(self, blackboard: DiffBlackboard):
+    #     """
+    #     重新计算所有时间步骤的平均利用率，不再依赖 changed_indices。
+    #     """
+    #     utilization_matrix = blackboard.utilization_matrix
+    #     capacity_matrix = blackboard.capacity_matrix
         
-        # 获取时间维度
-        time_steps = utilization_matrix.shape[0]
+    #     # 获取时间维度
+    #     time_steps = utilization_matrix.shape[0]
 
-        # 逐步遍历每个时间步骤
-        for t in range(time_steps):
-            # 计算每个时间步下的有效容量（大于0的部分）
-            valid_capacity_mask_t = capacity_matrix[t] > 0
-            valid_counts_t = np.sum(valid_capacity_mask_t)
+    #     # 逐步遍历每个时间步骤
+    #     for t in range(time_steps):
+    #         # 计算每个时间步下的有效容量（大于0的部分）
+    #         valid_capacity_mask_t = capacity_matrix[t] > 0
+    #         valid_counts_t = np.sum(valid_capacity_mask_t)
             
-            # 计算该时间步下所有的利用率之和
-            utilization_sums_t = np.sum(utilization_matrix[t])
+    #         # 计算该时间步下所有的利用率之和
+    #         utilization_sums_t = np.sum(utilization_matrix[t])
 
-            # 计算该时间步的平均利用率，避免除以零的情况
-            if valid_counts_t > 0:
-                blackboard.average_utilization[t] = utilization_sums_t / valid_counts_t
-            else:
-                blackboard.average_utilization[t] = 0.0
+    #         # 计算该时间步的平均利用率，避免除以零的情况
+    #         if valid_counts_t > 0:
+    #             blackboard.average_utilization[t] = utilization_sums_t / valid_counts_t
+    #         else:
+    #             blackboard.average_utilization[t] = 0.0
 
-        return blackboard.average_utilization
+    #     return blackboard.average_utilization
 
-    def _calculate_average_lifespan(self, blackboard: DiffBlackboard):
-        lifespan_percentage_sum = blackboard.lifespan_percentage_sum
-        fleetsize = blackboard.fleetsize
-        changed_time_steps = np.array(list(blackboard.changed_time_steps))
+    # def _calculate_average_lifespan(self, blackboard: DiffBlackboard):
+    #     lifespan_percentage_sum = blackboard.lifespan_percentage_sum
+    #     fleetsize = blackboard.fleetsize
+    #     changed_time_steps = np.array(list(blackboard.changed_time_steps))
 
-        if len(changed_time_steps) == 0:
-            return blackboard.average_lifespan
+    #     if len(changed_time_steps) == 0:
+    #         return blackboard.average_lifespan
 
-        # 计算平均寿命百分比，避免除以零
-        with np.errstate(divide='ignore', invalid='ignore'):
-            average_lifespan = np.divide(
-                lifespan_percentage_sum,
-                fleetsize,
-                out=np.zeros_like(lifespan_percentage_sum),
-                where=fleetsize != 0
-            )
+    #     # 计算平均寿命百分比，避免除以零
+    #     with np.errstate(divide='ignore', invalid='ignore'):
+    #         average_lifespan = np.divide(
+    #             lifespan_percentage_sum,
+    #             fleetsize,
+    #             out=np.zeros_like(lifespan_percentage_sum),
+    #             where=fleetsize != 0
+    #         )
 
-        # 只更新受影响的时间步
-        blackboard.average_lifespan[changed_time_steps] = average_lifespan[changed_time_steps]
+    #     # 只更新受影响的时间步
+    #     blackboard.average_lifespan[changed_time_steps] = average_lifespan[changed_time_steps]
 
-        return blackboard.average_lifespan
+    #     return blackboard.average_lifespan
 
     def _calculate_revenue(self, blackboard: DiffBlackboard):
         revenue = np.sum(blackboard.satisfaction_matrix * blackboard.price_matrix, axis=(1, 2))
@@ -725,7 +725,7 @@ class DiffSolution:
                 self.__print({
                     'time-step': t + 1,
                     'P': round(profit[t], 2),
-                    'Size': int(blackboard.fleetsize[t]),
+                    # 'Size': int(blackboard.fleetsize[t]),
                     '购买费用': round(self.cost_details[t]['purchase_cost'], 2),
                     '能耗费用': round(self.cost_details[t]['energy_cost'], 2),
                     '维护费用': round(self.cost_details[t]['maintenance_cost'], 2),
@@ -812,7 +812,7 @@ class DiffSolution:
         pass
 
 
-def export_solution_to_json(server_map: Dict[str, ServerInfo], price_matrix, file_path: str):
+def export_solution_to_json(server_map: Dict[str, ServerInfo], price_matrix:pd.DataFrame, file_path: str):
     solution_data = []
     pricing_strategy = []
 

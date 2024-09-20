@@ -5,13 +5,13 @@ from colorama import Fore, Style
 import gym
 from gym import spaces
 import numpy as np
-from threading import Event
+from threading import Event, Thread
 
 from stable_baselines3 import PPO
 import torch
 
 from real_diff_evaluation import DiffSolution, ServerInfo, ServerMoveInfo
-from real_diff_SA_basic import OperationContext, SlotAvailabilityManager
+from real_diff_SA_basic import OperationContext, SlotAvailabilityManager, NeighborhoodOperation
 
 def create_flatten_array_exclusive(servers_df, w):
     # 初始化二维数组列表
@@ -211,4 +211,56 @@ class PPO_SA_Env(gym.Env):
         pass
 
 
-    
+import gym
+from gym import spaces
+from stable_baselines3 import PPO
+import numpy as np
+from stable_baselines3.common.callbacks import BaseCallback
+
+class PPO_BuyServerOperation(NeighborhoodOperation):
+    def __init__(self, context: OperationContext, env: PPO_SA_Env, model: PPO):
+        super().__init__(context)
+        self.env = env
+        self.model = model
+        self.sa_thread = None
+
+    def execute_and_evaluate(self):
+        # Start the environment thread for PPO learning
+        if self.sa_thread is None:
+            self.sa_thread = Thread(target=self.run_sa_environment)
+            self.sa_thread.start()
+
+        # Send signal2 to notify the environment
+        self._print("Sending signal2 to PPO environment")
+        self.env.signal2.set()
+
+        # Wait for signal1 from the environment
+        self._print("Waiting for signal1 from PPO environment")
+        self.env.signal1.wait()
+        self._print("Received signal1 from PPO environment")
+        self.env.signal1.clear()
+
+        # Read the new score from the environment
+        new_score = self.env.info['score']
+        self._print(f"New score from PPO: {new_score}")
+
+        # Check constraint violations
+        # Assuming the environment sets 'constraint_violation' in info
+        if 'constraint_violation' in self.env.info and self.env.info['constraint_violation']:
+            # Violation occurred
+            self._print(f"Constraint violation: {self.env.info['constraint_violation']}")
+            return False, -1  # Fixed penalty
+        else:
+            # No violation
+            return True, new_score
+
+    def run_sa_environment(self):
+        # Function to run PPO learning in a separate thread
+        # Here we train the PPO agent
+        self._print("Starting PPO learning")
+        self.model.learn(total_timesteps=100000000)  # Adjust as needed
+        self._print("PPO learning completed")
+
+    def execute(self):
+        # Not used in this context
+        pass

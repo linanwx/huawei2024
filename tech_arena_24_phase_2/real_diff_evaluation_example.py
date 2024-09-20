@@ -143,7 +143,7 @@ def load_and_process_operations(file_path):
 
 
 # 示例调用
-json_file_path = './output/3329_1.45831e+09.json'
+json_file_path = './output/2381_2.08774e+09.json'
 server_map, pricing_steps = load_and_process_operations(json_file_path)
 
 
@@ -156,7 +156,7 @@ server_map, pricing_steps = load_and_process_operations(json_file_path)
     # print(f'{step}, {gen}, {price}')
 
 start_time = time.time()  # 记录开始时间
-S = DiffSolution(3329, True)
+S = DiffSolution(2381, True)
 
 # 逐个服务器处理，并进行评估
 for server_info in server_map.values():

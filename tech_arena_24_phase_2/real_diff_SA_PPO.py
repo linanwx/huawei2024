@@ -15,35 +15,17 @@ from colorama import Fore, Style
 from real_diff_evaluation import DiffSolution, ServerInfo, ServerMoveInfo, export_solution_to_json, update_best_solution, SERVER_GENERATION_MAP, LATENCY_SENSITIVITY_MAP, evaluate_map
 from idgen import ThreadSafeIDGenerator
 
-from ppo_sa_env import PPO_SA_Env
-from stable_baselines3 import PPO
-from threading import Thread
+# from ppo_sa_env import PPO_SA_Env
 
-from real_diff_SA_basic import SA_status, SlotAvailabilityManager, OperationContext
+from real_diff_SA_basic import NeighborhoodOperation, SA_status, SlotAvailabilityManager, OperationContext
 
 TIME_STEPS = 168
-DEBUG = True
+DEBUG = False
 
 # Automatically create output directory
 output_dir = './output/'
 if not os.path.exists(output_dir):
     os.makedirs(output_dir)
-
-class NeighborhoodOperation(ABC):
-    def __init__(self, context: OperationContext):
-        self.context = context
-
-    def _print(self, *args, color=None, **kwargs):
-        if self.context.verbose:
-            # 设置颜色
-            if color:
-                print(f"{color}{' '.join(map(str, args))}{Style.RESET_ALL}", **kwargs)
-            else:
-                print(*args, **kwargs)
-
-    @abstractmethod
-    def execute_and_evaluate(self) -> Tuple[bool, float]:
-        pass
 
 
 class SA_NeighborhoodOperation(NeighborhoodOperation):
@@ -57,60 +39,6 @@ class SA_NeighborhoodOperation(NeighborhoodOperation):
         
     @abstractmethod
     def execute(self):
-        pass
-
-import gym
-from gym import spaces
-from stable_baselines3 import PPO
-import numpy as np
-from stable_baselines3.common.callbacks import BaseCallback
-
-class PPO_BuyServerOperation(NeighborhoodOperation):
-    def __init__(self, context: OperationContext, env: PPO_SA_Env, model: PPO):
-        super().__init__(context)
-        self.env = env
-        self.model = model
-        self.sa_thread = None
-
-    def execute_and_evaluate(self):
-        # Start the environment thread for PPO learning
-        if self.sa_thread is None:
-            self.sa_thread = Thread(target=self.run_sa_environment)
-            self.sa_thread.start()
-
-        # Send signal2 to notify the environment
-        self._print("Sending signal2 to PPO environment")
-        self.env.signal2.set()
-
-        # Wait for signal1 from the environment
-        self._print("Waiting for signal1 from PPO environment")
-        self.env.signal1.wait()
-        self._print("Received signal1 from PPO environment")
-        self.env.signal1.clear()
-
-        # Read the new score from the environment
-        new_score = self.env.info['score']
-        self._print(f"New score from PPO: {new_score}")
-
-        # Check constraint violations
-        # Assuming the environment sets 'constraint_violation' in info
-        if 'constraint_violation' in self.env.info and self.env.info['constraint_violation']:
-            # Violation occurred
-            self._print(f"Constraint violation: {self.env.info['constraint_violation']}")
-            return False, -1  # Fixed penalty
-        else:
-            # No violation
-            return True, new_score
-
-    def run_sa_environment(self):
-        # Function to run PPO learning in a separate thread
-        # Here we train the PPO agent
-        self._print("Starting PPO learning")
-        self.model.learn(total_timesteps=100000000)  # Adjust as needed
-        self._print("PPO learning completed")
-
-    def execute(self):
-        # Not used in this context
         pass
 
 class BuyServerOperation(SA_NeighborhoodOperation):
@@ -907,11 +835,12 @@ class SimulatedAnnealing:
         policy_kwargs = dict(
             net_arch=[dict(pi=[128, 128, 64], vf=[128, 128, 64])]
         )
-        self.env = PPO_SA_Env(solution, self.context, slot_manager, servers_df, id_gen)
-        self.model = PPO('MultiInputPolicy', self.env, verbose=1, policy_kwargs=policy_kwargs)
-        if os.path.exists(self.env.MODEL_SAVE_PATH):
-            self.model.load(self.env.MODEL_SAVE_PATH)
-        self.env.model = self.model
+        
+        # self.env = PPO_SA_Env(solution, self.context, slot_manager, servers_df, id_gen)
+        # self.model = PPO('MultiInputPolicy', self.env, verbose=1, policy_kwargs=policy_kwargs)
+        # if os.path.exists(self.env.MODEL_SAVE_PATH):
+        #     self.model.load(self.env.MODEL_SAVE_PATH)
+        # self.env.model = self.model
 
         # 初始化操作
         self.operations : list[NeighborhoodOperation] = []
@@ -1072,7 +1001,7 @@ def get_my_solution(seed, verbose=False):
         initial_temp=200000,
         min_temp=100,
         alpha=0.99999,
-        max_iter=5000,
+        max_iter=200000,
         verbose=verbose
     )
     best_solution_server_map, best_score, best_price_matrix = sa.run()
@@ -1082,7 +1011,7 @@ def get_my_solution(seed, verbose=False):
 
 if __name__ == '__main__':
     start = time.time()
-    seed = 3329
+    seed = 2381
     best_solution_server_map, best_score = get_my_solution(seed, verbose=True if DEBUG else False)
     end = time.time()
     print(f"Elapsed time: {end - start:.4f} seconds")
