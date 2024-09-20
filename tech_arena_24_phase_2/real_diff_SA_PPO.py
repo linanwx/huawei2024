@@ -859,15 +859,22 @@ class AdjustServerPriceOperation(SA_NeighborhoodOperation):
     SERVER_TYPE_KEYS = list(SERVER_GENERATION_MAP.keys())
 
     def execute(self):
-        start_time = random.randint(0, TIME_STEPS - 1)
-        end_time = random.randint(start_time + 1, TIME_STEPS - 1)
+        # 随机生成区间长度
+        duration = random.randint(1, TIME_STEPS - 1)
+        
+        # 再随机生成起始时间，保证剩下的时间足够
+        start_time = random.randint(0, TIME_STEPS - duration)
+        
+        # 根据区间长度确定结束时间
+        end_time = start_time + duration
+        
         latency_sensitivity = random.choice(self.LATENCY_SENSITIVITY_KEYS)
         server_type = random.choice(self.SERVER_TYPE_KEYS)
         ratio = random.uniform(0.5, 1.5)
 
         try:
             self.context.solution.adjust_price_ratio(start_time, end_time, latency_sensitivity,
-                                                     server_type, ratio)
+                                                    server_type, ratio)
             return True
         except:
             return False
@@ -935,6 +942,10 @@ class SimulatedAnnealing:
         self.register_operation(
             MergeServersOperation(context=self.context),
             weight=0.3  # Adjust the weight as desired
+        )
+        self.register_operation(
+            AdjustServerPriceOperation(context=self.context),
+            weight=0.6
         )
         # self.register_operation(
         #     PPO_BuyServerOperation(context=self.context, env=self.env, model=self.model),
