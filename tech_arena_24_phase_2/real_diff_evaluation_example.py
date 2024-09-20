@@ -1,7 +1,7 @@
 import json
 import time
 import pandas as pd
-from real_diff_evaluation import LATENCY_SENSITIVITY_MAP, SERVER_GENERATION_MAP, DiffSolution, ServerMoveInfo, ServerInfo
+from real_diff_evaluation import LATENCY_SENSITIVITY_MAP, SERVER_GENERATION_MAP, DiffSolution, ServerMoveInfo, ServerInfo, export_solution_to_json
 
 def load_selling_price_dict(file_path):
     """
@@ -123,7 +123,7 @@ def load_and_process_operations(file_path):
 
 
 # 示例调用
-json_file_path = './data/solution_example.json'
+json_file_path = './output/3329_1.52814e+09.json'
 server_map, pricing_steps = load_and_process_operations(json_file_path)
 
 # print(f'{server_map}\n, {pricing_steps}')
@@ -135,7 +135,7 @@ server_map, pricing_steps = load_and_process_operations(json_file_path)
     # print(f'{step}, {gen}, {price}')
 
 start_time = time.time()  # 记录开始时间
-S = DiffSolution(123, True)
+S = DiffSolution(3329, True)
 
 # 逐个服务器处理，并进行评估
 for server_info in server_map.values():
@@ -156,3 +156,5 @@ S.commit_server_changes()
 print(f'score: {score}')
 end_time = time.time()  # 记录结束时间
 print(f'运行时间：{end_time - start_time:.2f} 秒')
+
+export_solution_to_json(S.server_map, S.price_matrix, './output/text.json')

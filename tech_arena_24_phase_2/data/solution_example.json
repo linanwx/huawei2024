@@ -40,7 +40,7 @@
 						"time_step": 10,
 						"latency_sensitivity": "low",
 						"server_generation": "CPU.S1",
-						"price": 15
+						"price": 15.0
 						}
 					]
 }

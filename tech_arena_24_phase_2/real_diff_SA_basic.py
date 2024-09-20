@@ -145,6 +145,7 @@ class SA_status:
     best_score: float = 0.0
     verbose: bool = False
     seed: int = 0
+    best_price_matrix: pd.DataFrame = None
 
 @dataclass
 class OperationContext:

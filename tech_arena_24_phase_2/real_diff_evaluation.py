@@ -789,8 +789,9 @@ class DiffSolution:
         pass
 
 
-def export_solution_to_json(server_map: Dict[str, ServerInfo], file_path: str):
+def export_solution_to_json(server_map: Dict[str, ServerInfo], price_matrix, file_path: str):
     solution_data = []
+    pricing_strategy = []
 
     # 遍历服务器映射
     for server_id, server_info in server_map.items():
@@ -815,10 +816,24 @@ def export_solution_to_json(server_map: Dict[str, ServerInfo], file_path: str):
                 "server_id": f"{server_id}:{i + 1}",
                 "action": "dismiss"
             })
-
+    
+    for t in range(price_matrix.shape[0]):  # 遍历每个时间步骤
+        for latency_key, latency_idx in LATENCY_SENSITIVITY_MAP.items():
+            for server_key, server_idx in SERVER_GENERATION_MAP.items():
+                price = price_matrix[t, latency_idx, server_idx]
+                pricing_strategy.append({
+                    "time_step": t + 1,  # 时间步从1开始
+                    "latency_sensitivity": latency_key,
+                    "server_generation": server_key,
+                    "price": price
+                })
+    output_data = {
+        "fleet": solution_data,
+        "pricing_strategy": pricing_strategy
+    }
     # 将结果写入 JSON 文件
     with open(file_path, 'w') as json_file:
-        json.dump(solution_data, json_file, indent=4)
+        json.dump(output_data, json_file, indent=4)
 
 def update_best_solution(old_best: Dict[str, 'ServerInfo'], current: Dict[str, 'ServerInfo']) -> Dict[str, 'ServerInfo']:
     """

@@ -942,7 +942,6 @@ class SimulatedAnnealing:
         # )
 
         self.best_solution_server_map = copy.deepcopy(self.context.solution.server_map)
-        self.best_score = float('-inf')
         self.operation_record = {}
 
     def record_operation(self, operation: NeighborhoodOperation, success: bool):
@@ -1007,7 +1006,8 @@ class SimulatedAnnealing:
             if new_score > self.status.best_score:
                 self.best_solution_server_map = update_best_solution(self.best_solution_server_map, self.context.solution.server_map)
                 self.status.best_score = new_score
-                self._print(f"New best solution with score {self.best_score:.5e}", color=Fore.GREEN)
+                self.status.best_price_matrix = self.context.solution.price_matrix.copy()
+                self._print(f"New best solution with score {self.status.best_score:.5e}", color=Fore.GREEN)
             return True
         else:
             # 拒绝新解并回滚更改
@@ -1041,7 +1041,7 @@ class SimulatedAnnealing:
             else:
                 self._print("No valid neighbor found", color=Fore.RED)
 
-        return self.best_solution_server_map, self.status.best_score
+        return self.best_solution_server_map, self.status.best_score, self.status.best_price_matrix
 
 def get_my_solution(seed, verbose=False):
     servers = pd.read_csv('./data/servers.csv')
@@ -1061,12 +1061,12 @@ def get_my_solution(seed, verbose=False):
         initial_temp=200000,
         min_temp=100,
         alpha=0.99999,
-        max_iter=200000,
+        max_iter=5000,
         verbose=verbose
     )
-    best_solution_server_map, best_score = sa.run()
+    best_solution_server_map, best_score, best_price_matrix = sa.run()
     print(f'Final best score for {seed}: {best_score:.5e}')
-    export_solution_to_json(best_solution_server_map, f"./output/{seed}_{best_score:.5e}.json")
+    export_solution_to_json(best_solution_server_map, best_price_matrix, f"./output/{seed}_{best_score:.5e}.json")
     return best_solution_server_map, best_score
 
 if __name__ == '__main__':
