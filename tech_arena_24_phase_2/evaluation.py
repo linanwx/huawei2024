@@ -333,10 +333,12 @@ def get_normalized_lifespan(fleet):
     return (fleet['lifespan'] / fleet['life_expectancy']).sum() / fleet.shape[0]
 
 
-def get_profit(D, Z, selling_prices, fleet):
+def get_profit(ts, D, Z, selling_prices, fleet):
     # CALCULATE OBJECTIVE P = PROFIT
     R = get_revenue(D, Z, selling_prices)
+    print(f'revenue at time-step {ts}: {R}')
     C = get_cost(fleet)
+    print(f'Cost at time-step {ts}: {C}')
     return R - C
 
 
@@ -492,7 +494,7 @@ def get_evaluation(fleet,
 
             # L = get_normalized_lifespan(FLEET)
 
-            P = get_profit(D, 
+            P = get_profit(ts, D, 
                            Zf, 
                            selling_prices,
                            FLEET)
