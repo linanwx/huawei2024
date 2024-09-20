@@ -42,7 +42,8 @@ def load_and_process_operations(file_path):
             # 如果是move操作，更新对应服务器的move_info
             if server_id in server_map:
                 move_info = ServerMoveInfo(time_step=row['time_step'] - 1, target_datacenter=row['datacenter_id'])
-                server_map[server_id].move_info.append(move_info)
+                server_map[server_id].buy_and_move_info.append(move_info)
+                server_map[server_id].init_buy_and_move_info()
             else:
                 print(f"未找到服务器 {server_id} 的购买记录，无法执行move操作。")
         
@@ -57,11 +58,11 @@ def load_and_process_operations(file_path):
 
 
 # 示例调用
-json_file_path = './output/2663_8.96212e+08.json'
+json_file_path = './output/2281_1.10388e+09.json'
 server_map = load_and_process_operations(json_file_path)
 
 start_time = time.time()  # 记录开始时间
-S = DiffSolution(2663, False)
+S = DiffSolution(2281, False)
 
 # 逐个服务器处理，并进行评估
 for server_info in server_map.values():
