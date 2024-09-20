@@ -132,7 +132,6 @@ def load_and_process_operations(file_path):
 
     # 使用 Pandas 处理 pricing strategy 信息
     pricing_df = process_pricing_strategy(pricing_strategy)
-    print(pricing_df)
 
     # 读取默认的 selling price
     default_selling_price_dict = load_selling_price_dict('./data/selling_prices.csv')
@@ -146,7 +145,7 @@ def load_and_process_operations(file_path):
 # 示例调用
 json_file_path = './output/3329_1.51956e+09.json'
 server_map, pricing_steps = load_and_process_operations(json_file_path)
-print(f'{pricing_steps}')
+
 
 # print(f'{server_map}\n, {pricing_steps}')
 

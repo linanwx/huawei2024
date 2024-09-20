@@ -229,8 +229,6 @@ class DiffSolution:
             
             if latency_idx is not None and server_idx is not None:
                 self.price_elasticity_matrix[latency_idx, server_idx] = row['elasticity']
-        
-        print("价格弹性矩阵加载完成。")
 
     def adjust_price_ratio(self, start_time, end_time, latency_sensitivity_key, server_type_key, ratio):
         self._init_blackboard()
@@ -251,8 +249,6 @@ class DiffSolution:
 
         # 基于 self.price_matrix 现有价格进行比例调整
         self.__blackboard.price_matrix[start_time:end_time, latency_idx, server_idx] *= ratio
-
-        print(f"在时间步区间 [{start_time}, {end_time})，按比例 {ratio:.2f} 调整了延迟敏感性 {latency_sensitivity_key} 和服务器类型 {server_type_key} 的价格为 {self.__blackboard.price_matrix[start_time, latency_idx, server_idx]}。")
 
     def _load_demand_data(self, file_path: str, seed):
         """
@@ -534,29 +530,20 @@ class DiffSolution:
 
         # 获取需求和容量数据
         initial_demand = self.demand_matrix[time_steps, latency_idxs, server_generation_idxs]
-        print(f"需求: {initial_demand[0]}")
         initial_price = self.original_price_matrix[time_steps, latency_idxs, server_generation_idxs]
-        print(f"价格: {initial_price[0]}")
         new_price = blackboard.price_matrix[time_steps, latency_idxs, server_generation_idxs]
-        print(f"新价格: {new_price[0]}")    
         price_elasticity = self.price_elasticity_matrix[latency_idxs, server_generation_idxs]
 
         delta_p = (new_price - initial_price) / initial_price
         adjusted_demand = initial_demand * (1 + price_elasticity * delta_p)
+        adjusted_demand = adjusted_demand.astype(int)
         adjusted_demand = np.clip(adjusted_demand, 0, None)
 
-
-
         capacity_values = blackboard.capacity_matrix[time_steps, latency_idxs, server_generation_idxs]
-
-        print(f"容量: {capacity_values[0]}")
-        print(f"调整后的需求: {adjusted_demand[0]}")
         
 
         # 计算需求满足值
         satisfaction_values = np.minimum(adjusted_demand, capacity_values)
-
-        print(f"需求满足值: {satisfaction_values[0]}")
 
         # 更新 blackboard 的 satisfaction_matrix
         blackboard.satisfaction_matrix[time_steps, latency_idxs, server_generation_idxs] = satisfaction_values
@@ -694,12 +681,9 @@ class DiffSolution:
         evaluation_result = np.sum(stepwise_product)
 
         if self.__verbose:
-            self.__print("\n\n\nEvaluation Result:")
             for t in range(TIME_STEPS):
                 self.__print({
                     'time-step': t + 1,
-                    # 'U': round(average_utilization[t], 2),
-                    # 'L': round(average_lifespan[t], 2),
                     'P': round(profit[t], 2),
                     'Size': int(blackboard.fleetsize[t]),
                     '购买费用': round(self.cost_details[t]['purchase_cost'], 2),
@@ -709,7 +693,6 @@ class DiffSolution:
                     '总收入': round(self._calculate_revenue(blackboard)[t], 2),
                 })
                 self.__print(f"Time Step {t + 1} - Capacity Combinations: {self.capacity_combinations[t]}")
-            self.__print(f'step 0 satisfaction_matrix: {blackboard.satisfaction_matrix[0]}')
         return evaluation_result
     
     def diff_evaluation(self):
