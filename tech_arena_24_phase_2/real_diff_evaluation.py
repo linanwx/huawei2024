@@ -8,9 +8,11 @@ from evaluation import get_actual_demand
 
 TIME_STEPS = 168  # 时间下标从0到167
 FAILURE_RATE = 0.0726  # 故障率
+EXPORT_CSV = False
 
 # 时延敏感性映射
 LATENCY_SENSITIVITY_MAP = {'low': 0, 'medium': 1, 'high': 2}
+RE_LATENCY_SENSITIVITY_MAP = {v: k for k, v in LATENCY_SENSITIVITY_MAP.items()}
 
 # 服务器代次映射
 SERVER_GENERATION_MAP = {
@@ -22,6 +24,7 @@ SERVER_GENERATION_MAP = {
     'GPU.S2': 5,
     'GPU.S3': 6
 }
+RE_SERVER_GENERATION_MAP = {v: k for k, v in SERVER_GENERATION_MAP.items()}
 
 def load_global_data():
     """
@@ -150,11 +153,11 @@ class DiffSolution:
         # 初始化一个空解
         self.server_map: Dict[str, ServerInfo] = {}
         # 初始化每一个时间步骤的服务器容量
-        self.capacity_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=int)
+        self.capacity_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
         # 初始化每一个时间步骤的需求矩阵
-        self.demand_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=int)
+        self.demand_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
         # 初始化每一个时间步骤的满足矩阵
-        self.satisfaction_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=int)
+        self.satisfaction_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
         # 初始化每一个时间步骤的服务器寿命
         self.lifespan = np.zeros(TIME_STEPS, dtype=float)
         # 初始化每一个时间步骤的寿命百分比总和
@@ -349,6 +352,7 @@ class DiffSolution:
 
     def apply_server_change(self, diff_info: ServerInfo):
         # print(f'apply_server_change: {diff_info}')
+        diff_info.init_buy_and_move_info()
         if diff_info.dismiss_time > diff_info.buy_and_move_info[0].time_step + diff_info.life_expectancy:
             raise ValueError("Dismiss time cannot exceed maximum lifespan.")
         self._init_blackboard()
@@ -539,8 +543,44 @@ class DiffSolution:
         adjusted_demand = adjusted_demand.astype(int)
         adjusted_demand = np.clip(adjusted_demand, 0, None)
 
+        if EXPORT_CSV:
+            # 使用 reshape 将数组展平
+            flat_data = adjusted_demand.reshape(-1)
+            # 生成 time_step 列，每个 time_step 重复 len(LATENCY_SENSITIVITY_MAP) * len(SERVER_GENERATION_MAP) 次
+            _time_steps = np.repeat(np.arange(TIME_STEPS), len(LATENCY_SENSITIVITY_MAP) * len(SERVER_GENERATION_MAP))
+            # 生成 latency_sensitivity 列，重复 len(SERVER_GENERATION_MAP) 次，并且循环 len(LATENCY_SENSITIVITY_MAP) 次
+            _latency_sensitivity = np.tile(np.repeat(list(RE_LATENCY_SENSITIVITY_MAP.values()), len(SERVER_GENERATION_MAP)), TIME_STEPS)
+            # 生成 server_generation 列，每个 latency_sensitivity 下循环所有的 server_generation
+            _server_generation = np.tile(list(RE_SERVER_GENERATION_MAP.values()), TIME_STEPS * len(LATENCY_SENSITIVITY_MAP))
+            # 创建 Pandas DataFrame
+            df = pd.DataFrame({
+                'time_step': _time_steps + 1,
+                'server_generation': _server_generation,
+                'latency_sensitivity': _latency_sensitivity,
+                'demand': flat_data
+            })
+
+            df.to_csv('demand_diffeval.csv', index=False)
+
         capacity_values = blackboard.capacity_matrix[time_steps, latency_idxs, server_generation_idxs]
-        
+        if EXPORT_CSV:
+            # 使用 reshape 将数组展平
+            flat_data = capacity_values.reshape(-1)
+            # 生成 time_step 列，每个 time_step 重复 len(LATENCY_SENSITIVITY_MAP) * len(SERVER_GENERATION_MAP) 次
+            _time_steps = np.repeat(np.arange(TIME_STEPS), len(LATENCY_SENSITIVITY_MAP) * len(SERVER_GENERATION_MAP))
+            # 生成 latency_sensitivity 列，重复 len(SERVER_GENERATION_MAP) 次，并且循环 len(LATENCY_SENSITIVITY_MAP) 次
+            _latency_sensitivity = np.tile(np.repeat(list(RE_LATENCY_SENSITIVITY_MAP.values()), len(SERVER_GENERATION_MAP)), TIME_STEPS)
+            # 生成 server_generation 列，每个 latency_sensitivity 下循环所有的 server_generation
+            _server_generation = np.tile(list(RE_SERVER_GENERATION_MAP.values()), TIME_STEPS * len(LATENCY_SENSITIVITY_MAP))
+            # 创建 Pandas DataFrame
+            df = pd.DataFrame({
+                'time_step': _time_steps + 1,
+                'server_generation': _server_generation,
+                'latency_sensitivity': _latency_sensitivity,
+                'capacity': flat_data
+            })
+
+            df.to_csv('capacity_diffeval.csv', index=False)
 
         # 计算需求满足值
         satisfaction_values = np.minimum(adjusted_demand, capacity_values)
@@ -560,7 +600,7 @@ class DiffSolution:
         blackboard.utilization_matrix[time_steps, latency_idxs, server_generation_idxs] = utilization_values
 
     def _adjust_capacity_by_failure_rate_approx(self, x, avg_failure_rate=FAILURE_RATE):
-        return int(x * (1 - avg_failure_rate))
+        return x * (1 - avg_failure_rate)
 
     def _update_capacity(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign=1):
         """
@@ -587,8 +627,8 @@ class DiffSolution:
 
             # 更新容量矩阵
             if latency_sensitivity is None:
-              print(current_move)
-              print(time_start, time_end, latency_sensitivity, server_generation_idx)
+                print(current_move)
+                print(time_start, time_end, latency_sensitivity, server_generation_idx)
             capacity_matrix[time_start:time_end, latency_sensitivity, server_generation_idx] += capacity
 
     def _calculate_average_utilization(self, blackboard: DiffBlackboard):

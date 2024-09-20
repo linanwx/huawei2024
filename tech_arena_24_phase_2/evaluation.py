@@ -14,6 +14,11 @@ logger.addHandler(file_handler)
 formatter = logging.Formatter('%(asctime)s | %(levelname)s | %(message)s')
 file_handler.setFormatter(formatter)
 
+# 创建一个记录需求的表格
+demand_according_to_prices = pd.DataFrame()
+capacity_record = pd.DataFrame()
+
+EXPORT_CSV = False
 
 def get_known(key):
     # STORE SOME CONFIGURATION VARIABLES
@@ -294,7 +299,7 @@ def adjust_capacity_by_failure_rate(x):
     # HELPER FUNCTION TO CALCULATE THE FAILURE RATE f
     # return int(x * (1 - truncweibull_min.rvs(0.3, 0.05, 0.1, size=1).item()))
     expected_value = 0.0726
-    return int(x * (1 - expected_value))
+    return x * (1 - expected_value)
 
 
 def check_datacenter_slots_size_constraint(fleet):
@@ -475,6 +480,14 @@ def get_evaluation(fleet,
         # UPDATE THE DEMAND ACCORDING TO PRICES AT TIMESTEP ts
         D = update_demand_according_to_prices(D, selling_prices, base_prices, elasticity)
 
+        if EXPORT_CSV:
+            tmpD = D.stack().reset_index()
+            tmpD.columns = ['server_generation', 'latency_sensitivity', 'demand']
+            tmpD['time_step'] = ts
+            # print(tmpD)
+            global demand_according_to_prices
+            demand_according_to_prices = pd.concat([demand_according_to_prices, tmpD], ignore_index=True)
+
         if ts_fleet.empty and not FLEET.empty:
             ts_fleet = FLEET
         elif ts_fleet.empty and FLEET.empty:
@@ -487,6 +500,12 @@ def get_evaluation(fleet,
         if FLEET.shape[0] > 0:
             # GET THE SERVERS CAPACITY AT TIMESTEP ts
             Zf = get_capacity_by_server_generation_latency_sensitivity(FLEET)
+            if EXPORT_CSV:
+                tmp_zf = Zf.stack().reset_index()
+                tmp_zf.columns = ['server_generation', 'latency_sensitivity', 'capacity']
+                tmp_zf['time_step'] = ts
+                global capacity_record
+                capacity_record = pd.concat([capacity_record, tmp_zf], ignore_index=True)
 
             if ts == 1:
                 print(Zf)
@@ -577,7 +596,7 @@ def evaluation_function(fleet,
     np.random.seed(seed)
     # EVALUATE SOLUTION
     try:
-        return get_evaluation(fleet, 
+        result = get_evaluation(fleet, 
                                 pricing_strategy, 
                                 demand,
                                 datacenters,
@@ -586,8 +605,15 @@ def evaluation_function(fleet,
                                 elasticity,
                                 time_steps=time_steps, 
                                 verbose=verbose)
+        if EXPORT_CSV:
+            demand_according_to_prices.to_csv('demand_original.csv', index=False)
+            capacity_record.to_csv('capacity_original.csv', index=False)
+
+        return result
     # CATCH EXCEPTIONS
     except Exception as e:
         logger.error(e)
         return None
+    
+
 
