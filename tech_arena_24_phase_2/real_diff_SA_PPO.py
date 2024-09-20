@@ -854,6 +854,25 @@ class MergeServersOperation(SA_NeighborhoodOperation):
             return False
         return True
 
+class AdjustServerPriceOperation(SA_NeighborhoodOperation):
+    LATENCY_SENSITIVITY_KEYS = list(LATENCY_SENSITIVITY_MAP.keys())
+    SERVER_TYPE_KEYS = list(SERVER_GENERATION_MAP.keys())
+
+    def execute(self):
+        start_time = random.randint(0, TIME_STEPS - 1)
+        end_time = random.randint(start_time + 1, TIME_STEPS - 1)
+        latency_sensitivity = random.choice(self.LATENCY_SENSITIVITY_KEYS)
+        server_type = random.choice(self.SERVER_TYPE_KEYS)
+        ratio = random.uniform(0.5, 1.5)
+
+        try:
+            self.context.solution.adjust_price_ratio(start_time, end_time, latency_sensitivity,
+                                                     server_type, ratio)
+            return True
+        except:
+            return False
+
+
 class SimulatedAnnealing:
     def __init__(self, slot_manager, servers_df, id_gen, solution: DiffSolution, seed, initial_temp, min_temp, alpha, max_iter, verbose=False):
         self.status = SA_status()
