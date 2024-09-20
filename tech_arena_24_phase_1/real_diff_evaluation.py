@@ -159,7 +159,7 @@ class DiffSolution:
         # 初始化每一个时间步骤的寿命百分比总和
         self.lifespan_percentage_sum = np.zeros(TIME_STEPS, dtype=float)
         # 初始化每一个时间步骤的服务器数量
-        self.fleetsize = np.zeros(TIME_STEPS, dtype=float)
+        self.fleetsize = np.zeros(TIME_STEPS, dtype=int)
         # 初始化平均寿命百分比
         self.average_lifespan = np.zeros(TIME_STEPS, dtype=float)
         # 初始化每一个时间步骤的成本
