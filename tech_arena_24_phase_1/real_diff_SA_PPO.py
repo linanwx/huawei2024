@@ -1,4 +1,5 @@
 import ast
+import math
 import os
 import time
 import copy
@@ -11,7 +12,7 @@ from dataclasses import dataclass
 from colorama import Fore, Style
 
 # Import the new DiffSolution and related classes
-from real_diff_evaluation import DiffSolution, ServerInfo, ServerMoveInfo, export_solution_to_json, update_best_solution, SERVER_GENERATION_MAP, LATENCY_SENSITIVITY_MAP
+from real_diff_evaluation import DiffSolution, ServerInfo, ServerMoveInfo, export_solution_to_json, update_best_solution, SERVER_GENERATION_MAP, LATENCY_SENSITIVITY_MAP, evaluate_map
 from idgen import ThreadSafeIDGenerator
 
 from ppo_sa_env import PPO_SA_Env
@@ -21,7 +22,7 @@ from threading import Thread
 from real_diff_SA_basic import SA_status, SlotAvailabilityManager, OperationContext
 
 TIME_STEPS = 168
-DEBUG = False
+DEBUG = True
 
 # Automatically create output directory
 output_dir = './output/'
@@ -864,7 +865,6 @@ class SimulatedAnnealing:
         self.status.seed = seed
         self.id_gen = id_gen
 
-        self.solution = solution
         self.slot_manager: SlotAvailabilityManager = slot_manager
 
         # 初始化操作上下文
@@ -872,7 +872,7 @@ class SimulatedAnnealing:
             slot_manager=self.slot_manager,
             servers_df=servers_df,
             id_gen=self.id_gen,
-            solution=self.solution,
+            solution=solution,
             verbose=self.status.verbose,
             sa_status=self.status
         )
@@ -922,7 +922,7 @@ class SimulatedAnnealing:
         #     weight=0.4
         # )
 
-        self.best_solution_server_map = copy.deepcopy(self.solution.server_map)
+        self.best_solution_server_map = copy.deepcopy(self.context.solution.server_map)
         self.best_score = float('-inf')
         self.operation_record = {}
 
@@ -977,29 +977,28 @@ class SimulatedAnnealing:
         if accept_prob >= 1.0 or random.random() < accept_prob:
             self._print(f"Accepted new solution with score {new_score:.5e}", color=Fore.BLUE)
             # 接受新解
-            self.solution.commit_server_changes()
-            self._print(f'self.solution.length: {len(self.solution.server_map)}')
+            self.context.solution.commit_server_changes()
             # 检查解是否合法
             self.slot_manager.apply_pending_updates()
             if DEBUG:
-                result = self.slot_manager.can_accommodate_servers(self.solution.server_map)
+                result = self.slot_manager.can_accommodate_servers(self.context.solution.server_map)
                 if not result:
                     self._print("New solution is invalid", color=Fore.RED)
                     raise ValueError("New solution is invalid")
             if new_score > self.status.best_score:
-                self.best_solution_server_map = update_best_solution(self.best_solution_server_map, self.solution.server_map)
+                self.best_solution_server_map = update_best_solution(self.best_solution_server_map, self.context.solution.server_map)
                 self.status.best_score = new_score
                 self._print(f"New best solution with score {self.best_score:.5e}", color=Fore.GREEN)
             return True
         else:
             # 拒绝新解并回滚更改
-            self.solution.discard_server_changes()
+            self.context.solution.discard_server_changes()
             self._print(f"Rejected new solution with score {new_score:.5e}")
             return False
 
     def run(self):
         """模拟退火的主循环。"""
-        self.status.current_score = self.solution.diff_evaluation()  # 初始评价
+        self.status.current_score = self.context.solution.diff_evaluation()  # 初始评价
         iteration = 0  # 用于记录有效迭代次数
         while iteration < self.status.max_iter:
             self._print(f"<------ Iteration {iteration}, Temperature {self.status.current_temp:.2f} Bestscore {self.status.best_score:.5e} ------->", color=Fore.CYAN)
@@ -1007,10 +1006,14 @@ class SimulatedAnnealing:
             new_score, success, _ = self.generate_neighbor()  # 生成一个邻域解
             if success:
                 accept_prob = self.acceptance_probability(self.status.current_score, new_score)
-                print(f"Iteration: {iteration}. New best solution for {self.status.seed} with score {self.status.best_score:.5e}")
+                # print(f"Iteration: {iteration}. New best solution for {self.status.seed} with score {self.status.best_score:.5e}")
                 if self.accept_solution(accept_prob, new_score):
                     self.status.current_score = new_score  # 如果接受，更新当前分数
-                    
+                    # score_compaire, another_S = evaluate_map(self.context.sa_status.seed, self.context.solution.server_map)
+                    # self.context.solution.check_same(another_S)
+                    # print(f'score: {self.status.current_score} score_compaire:{score_compaire}')
+                    # if math.fabs(score_compaire - self.status.current_score) > 1e-6:
+                    #     raise("score_compaire != self.status.current_score")
                 # 只有当找到有效邻域解时，才增加迭代次数
                 iteration += 1
                 self.status.current_temp *= self.status.alpha  # 降低温度

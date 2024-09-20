@@ -102,6 +102,9 @@ class SlotAvailabilityManager:
         for dc in self.datacenter_slots.keys():
             # 计算实际占用的插槽数量
             actual_used_slots = self.total_slots[dc] - self.datacenter_slots[dc]
+            if not np.all(actual_used_slots >= 0):
+                self._print(f"数据中心 {dc} 的插槽占用小于 0。")
+                return False
             # 如果期望的占用与实际占用不一致，则返回 False
             if not np.array_equal(expected_datacenter_slots[dc], actual_used_slots):
                 self._print(f"数据中心 {dc} 的期望插槽占用与实际不一致。")

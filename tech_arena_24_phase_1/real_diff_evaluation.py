@@ -135,7 +135,6 @@ class DiffBlackboard:
     capacity_matrix: np.ndarray
     cost: np.ndarray
     satisfaction_matrix: np.ndarray
-    changed_capacity_indices: set
     utilization_matrix: np.ndarray
     average_utilization: np.ndarray
     average_lifespan: np.ndarray
@@ -150,11 +149,11 @@ class DiffSolution:
         # 初始化一个空解
         self.server_map: Dict[str, ServerInfo] = {}
         # 初始化每一个时间步骤的服务器容量
-        self.capacity_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
+        self.capacity_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=int)
         # 初始化每一个时间步骤的需求矩阵
-        self.demand_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
+        self.demand_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=int)
         # 初始化每一个时间步骤的满足矩阵
-        self.satisfaction_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=float)
+        self.satisfaction_matrix = np.zeros((TIME_STEPS, len(LATENCY_SENSITIVITY_MAP), len(SERVER_GENERATION_MAP)), dtype=int)
         # 初始化每一个时间步骤的服务器寿命
         self.lifespan = np.zeros(TIME_STEPS, dtype=float)
         # 初始化每一个时间步骤的寿命百分比总和
@@ -280,6 +279,7 @@ class DiffSolution:
         self.__blackboard = None
 
     def apply_server_change(self, diff_info: ServerInfo):
+        # print(f'apply_server_change: {diff_info}')
         if diff_info.dismiss_time > diff_info.buy_and_move_info[0].time_step + diff_info.life_expectancy:
             raise ValueError("Dismiss time cannot exceed maximum lifespan.")
         if self.__blackboard is None:
@@ -291,7 +291,6 @@ class DiffSolution:
                 capacity_matrix=self.capacity_matrix.copy(),
                 cost=self.cost.copy(),
                 satisfaction_matrix=self.satisfaction_matrix.copy(),
-                changed_capacity_indices=set(),
                 utilization_matrix=self.utilization_matrix.copy(),
                 average_utilization=self.average_utilization.copy(),
                 average_lifespan=self.average_lifespan.copy(),
@@ -468,18 +467,10 @@ class DiffSolution:
 
     def _recalculate_satisfaction(self, blackboard: DiffBlackboard):
         """
-        根据容量变化的区域，重新计算需求满足数组，并更新利用率矩阵。
+        重新计算需求满足数组，并更新利用率矩阵。
         """
-        # 获取所有受影响的索引
-        changed_indices = list(blackboard.changed_capacity_indices)
-        if not changed_indices:
-            return  # 如果没有变化，直接返回
-
-        # 将索引列表转换为数组，便于矢量化操作
-        changed_indices = np.array(changed_indices)
-        time_steps = changed_indices[:, 0]
-        latency_idxs = changed_indices[:, 1]
-        server_generation_idxs = changed_indices[:, 2]
+        # 获取容量和需求矩阵的维度
+        time_steps, latency_idxs, server_generation_idxs = np.indices(self.demand_matrix.shape)
 
         # 获取需求和容量数据
         demand_values = self.demand_matrix[time_steps, latency_idxs, server_generation_idxs]
@@ -495,7 +486,7 @@ class DiffSolution:
         # 注意要避免除以零的情况
         with np.errstate(divide='ignore', invalid='ignore'):
             utilization_values = np.where(
-                capacity_values > 0,
+                capacity_values > 1e-6,
                 satisfaction_values / capacity_values,
                 0.0
             )
@@ -503,7 +494,7 @@ class DiffSolution:
         blackboard.utilization_matrix[time_steps, latency_idxs, server_generation_idxs] = utilization_values
 
     def _adjust_capacity_by_failure_rate_approx(self, x, avg_failure_rate=FAILURE_RATE):
-        return x * (1 - avg_failure_rate)
+        return int(x * (1 - avg_failure_rate))
 
     def _update_capacity(self, blackboard: DiffBlackboard, diff_info: ServerInfo, sign=1):
         """
@@ -534,31 +525,26 @@ class DiffSolution:
               print(time_start, time_end, latency_sensitivity, server_generation_idx)
             capacity_matrix[time_start:time_end, latency_sensitivity, server_generation_idx] += capacity
 
-            # 记录容量变化的索引
-            for t in range(time_start, time_end):
-                blackboard.changed_capacity_indices.add((t, latency_sensitivity, server_generation_idx))
-
     def _calculate_average_utilization(self, blackboard: DiffBlackboard):
+        """
+        重新计算所有时间步骤的平均利用率，不再依赖 changed_indices。
+        """
         utilization_matrix = blackboard.utilization_matrix
-        changed_indices = list(blackboard.changed_capacity_indices)
+        capacity_matrix = blackboard.capacity_matrix
+        
+        # 获取时间维度
+        time_steps = utilization_matrix.shape[0]
 
-        if not changed_indices:
-            # 如果没有变化，直接返回之前计算的平均利用率
-            return blackboard.average_utilization
-
-        # 将索引列表转换为数组
-        changed_indices = np.array(changed_indices)
-        time_steps = changed_indices[:, 0]
-
-        # 获取所有受影响的时间步骤的集合
-        affected_time_steps = np.unique(time_steps)
-
-        # 对于受影响的时间步骤，重新计算 valid_counts 和 utilization_sums
-        for t in affected_time_steps:
-            valid_capacity_mask_t = blackboard.capacity_matrix[t] > 0
+        # 逐步遍历每个时间步骤
+        for t in range(time_steps):
+            # 计算每个时间步下的有效容量（大于0的部分）
+            valid_capacity_mask_t = capacity_matrix[t] > 0
             valid_counts_t = np.sum(valid_capacity_mask_t)
+            
+            # 计算该时间步下所有的利用率之和
             utilization_sums_t = np.sum(utilization_matrix[t])
 
+            # 计算该时间步的平均利用率，避免除以零的情况
             if valid_counts_t > 0:
                 blackboard.average_utilization[t] = utilization_sums_t / valid_counts_t
             else:
@@ -656,6 +642,66 @@ class DiffSolution:
         evaluation_result = self._final_calculation(self.__blackboard)
         return evaluation_result
 
+    def check_same(self, another_solution:'DiffSolution'):
+        flag = True
+        if self.server_map.keys() != another_solution.server_map.keys():
+            print("server_map keys not same")
+            print('self.server_map.keys()', self.server_map.keys())
+            print('another_solution.server_map.keys()', another_solution.server_map.keys())
+            flag = False
+        for server_id in self.server_map.keys():
+            if self.server_map[server_id] != another_solution.server_map[server_id]:
+                print(f"server_map[{server_id}] not same")
+                flag = False
+        # 由于存在浮点数误差，检查误差是否在容忍范围内
+        if not np.allclose(self.lifespan, another_solution.lifespan):
+            print("lifespan not same")
+            flag = False
+        if not np.allclose(self.lifespan_percentage_sum, another_solution.lifespan_percentage_sum):
+            print("lifespan_percentage_sum not same")
+            flag = False
+        if not np.allclose(self.fleetsize, another_solution.fleetsize):
+            print("fleetsize not same")
+            flag = False
+        if not np.allclose(self.capacity_matrix, another_solution.capacity_matrix):
+            print("capacity_matrix not same")
+            flag = False
+        if not np.allclose(self.cost, another_solution.cost):
+            print("cost not same")
+            flag = False
+        if not np.allclose(self.satisfaction_matrix, another_solution.satisfaction_matrix):
+            print("satisfaction_matrix not same")
+            flag = False
+        if not np.allclose(self.utilization_matrix, another_solution.utilization_matrix):
+            print("utilization_matrix not same")
+            # 遍历矩阵，找到不一致的地方
+            for i in range(TIME_STEPS):
+                for j in range(len(LATENCY_SENSITIVITY_MAP)):
+                    for k in range(len(SERVER_GENERATION_MAP)):
+                        if not np.isclose(self.utilization_matrix[i, j, k], another_solution.utilization_matrix[i, j, k]):
+                            print(f"utilization_matrix[{i}, {j}, {k}] not same")
+                            print(f"self.utilization_matrix[{i}, {j}, {k}]: {self.utilization_matrix[i, j, k]}")
+                            print(f"another_solution.utilization_matrix[{i}, {j}, {k}]: {another_solution.utilization_matrix[i, j, k]}")
+                            flag = False
+            flag = False
+        if not np.allclose(self.average_utilization, another_solution.average_utilization):
+            # 遍历矩阵，找到不一致的地方
+            for i in range(TIME_STEPS):
+                if not np.isclose(self.average_utilization[i], another_solution.average_utilization[i]):
+                    print(f"average_utilization[{i}] not same")
+                    print(f"self.average_utilization[{i}]: {self.average_utilization[i]}")
+                    print(f"another_solution.average_utilization[{i}]: {another_solution.average_utilization[i]}")
+                    flag = False
+            print("average_utilization not same")
+            flag = False
+        if not np.allclose(self.average_lifespan, another_solution.average_lifespan):
+            print("average_lifespan not same")
+            flag = False
+        if flag:
+            print("All same")
+        else:
+            raise ValueError("Not same")
+
 def export_solution_to_json(server_map: Dict[str, ServerInfo], file_path: str):
     solution_data = []
 
@@ -716,3 +762,12 @@ def update_best_solution(old_best: Dict[str, 'ServerInfo'], current: Dict[str, '
             # 如果值相同，则无需操作，保留旧解中的值
 
     return old_best
+
+
+def evaluate_map(seed, server_map) -> float :
+    S = DiffSolution(seed, False)
+    for server_info in server_map.values():
+        S.apply_server_change(server_info)
+    score = S.diff_evaluation()
+    S.commit_server_changes()
+    return score, S

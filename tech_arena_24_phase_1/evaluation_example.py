@@ -20,7 +20,7 @@ score = evaluation_function(solution,
                             datacenters,
                             servers,
                             selling_prices,
-                            seed=2281, verbose = 0)
+                            seed=2281, verbose = 1)
 
 # END TIMER
 end_time = time.time()

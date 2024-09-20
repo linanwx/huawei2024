@@ -69,7 +69,10 @@ for server_info in server_map.values():
     S.apply_server_change(server_info)
     
 score = S.diff_evaluation()
+S.commit_server_changes()
 # S.commit_server_changes()
 print(f'score: {score}')
 end_time = time.time()  # 记录结束时间
 print(f'运行时间：{end_time - start_time:.2f} 秒')
+
+S.print_step_info()

@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from seeds import known_seeds
-from real_diff_SA import get_my_solution
+from real_diff_SA_PPO import get_my_solution
 from multiprocessing import Pool
 
 # 获取训练的 seeds
