@@ -18,6 +18,7 @@ from idgen import ThreadSafeIDGenerator
 # from ppo_sa_env import PPO_SA_Env
 
 from real_diff_SA_basic import NeighborhoodOperation, SA_status, SlotAvailabilityManager, OperationContext
+from parameter_generator import SAParameterGenerator
 
 TIME_STEPS = 168
 DEBUG = False
@@ -29,9 +30,20 @@ DEBUG = False
 
 INITIAL_TEMPERATURE = 4480000.0
 MIN_TEMPERATURE = 44.8
-ALPHA = 0.9999885
-MAX_ITER = 1000000
-GLOBAL_MAX_PURCHASE_RATIO = 0.12
+
+# for 10 min
+# ALPHA = 0.9999885
+# MAX_ITER = 1000000
+
+# for 1 min
+# ALPHA = 0.9998849
+# MAX_ITER = 100000
+
+# for 30 min
+ALPHA = 0.9999962
+MAX_ITER = 3000000
+
+GLOBAL_MAX_PURCHASE_RATIO = 0.1
 
 # Automatically create output directory
 output_dir = './output/'
@@ -190,6 +202,9 @@ class MoveServerOperation(SA_NeighborhoodOperation):
 
 class AdjustQuantityOperation(SA_NeighborhoodOperation):
     MAX_QUANTITY_CHANGE = GLOBAL_MAX_PURCHASE_RATIO
+    def __init__(self, context: OperationContext):
+        super().__init__(context)
+        self.decrease_max_parameters = SAParameterGenerator(0.15, 0.05, self.context.sa_status.max_iter)
     def execute(self):
         if not self.context.solution.server_map:
             self._print("No servers to adjust quantity")
@@ -204,7 +219,12 @@ class AdjustQuantityOperation(SA_NeighborhoodOperation):
         # 决定增加还是减少
         if random.random() < 0.5:
             # 随机选择一个新的数量，介于 0 和 (current_quantity - 1) 之间
-            new_quantity = random.randint(0, current_quantity - 1)
+            max_decrease_rate = self.decrease_max_parameters.get_parameter(self.context.sa_status.current_iter)
+            max_decrease_quantity = int(current_quantity * max_decrease_rate)
+            if max_decrease_quantity == 0:
+                max_decrease_quantity = 1
+            min_quantity = max(0, current_quantity - max_decrease_quantity)
+            new_quantity = random.randint(min_quantity, current_quantity - 1)
             quantity_change = current_quantity - new_quantity  # Positive number
 
             server_copy = copy.deepcopy(server)
@@ -288,6 +308,10 @@ class AdjustQuantityOperation(SA_NeighborhoodOperation):
             return True
 
 class AdjustTimeOperation(SA_NeighborhoodOperation):
+    def __init__(self, context: OperationContext):
+        super().__init__(context)
+        self.time_max_change_parameters = SAParameterGenerator(168, 10, self.context.sa_status.max_iter)
+
     def execute(self):
         if not self.context.solution.server_map:
             self._print("No servers to adjust time")
@@ -306,7 +330,12 @@ class AdjustTimeOperation(SA_NeighborhoodOperation):
                 self._print(f"No valid purchase times available for server {server_copy.server_id}")
                 self._print(f"Earliest time: {earliest_time}, Latest time: {latest_time}")
                 return False
-            new_purchase_time = random.randint(earliest_time, latest_time)
+            # 以当前时间为范围，框定最早和最晚时间
+            current_time = server_copy.buy_and_move_info[0].time_step
+            max_change = self.time_max_change_parameters.get_parameter(self.context.sa_status.current_iter)
+            max_earlist_time = max(int(current_time - max_change), earliest_time, 0)
+            max_latest_time = min(int(current_time + max_change), latest_time, TIME_STEPS - 1)
+            new_purchase_time = random.randint(max_earlist_time, max_latest_time)
             self._print(f'调整服务器 {server_copy.server_id} 的购买时间为 {new_purchase_time} 原购买时间为 {server_copy.buy_and_move_info[0].time_step}')
             return self.adjust_purchase_time(server_copy, server, new_purchase_time)
 
@@ -320,7 +349,11 @@ class AdjustTimeOperation(SA_NeighborhoodOperation):
             if earliest_time is None or latest_time is None:
                 self._print(f"No valid migration times available for server {server_copy.server_id}")
                 return False
-            new_migration_time = random.randint(earliest_time, latest_time)
+            current_time = server_copy.buy_and_move_info[move_idx].time_step
+            max_change = self.time_max_change_parameters.get_parameter(self.context.sa_status.current_iter)
+            max_earlist_time = max(int(current_time - max_change), earliest_time, 0)
+            max_latest_time = min(int(current_time + max_change), latest_time, TIME_STEPS - 1)
+            new_migration_time = random.randint(max_earlist_time, max_latest_time)
             return self.adjust_migration_time(server_copy, server, move_idx, new_migration_time)
 
         elif operation_type == 'dismiss':
@@ -330,7 +363,11 @@ class AdjustTimeOperation(SA_NeighborhoodOperation):
             if earliest_time is None or latest_time is None:
                 self._print(f"No valid dismiss times available for server {server_copy.server_id}")
                 return False
-            new_dismiss_time = random.randint(earliest_time, latest_time)
+            current_time = server_copy.dismiss_time
+            max_change = self.time_max_change_parameters.get_parameter(self.context.sa_status.current_iter)
+            max_earlist_time = max(int(current_time - max_change), earliest_time, 1)
+            max_latest_time = min(int(current_time + max_change), latest_time, TIME_STEPS)
+            new_dismiss_time = random.randint(max_earlist_time, max_latest_time)
             return self.adjust_dismiss_time(server_copy, server, new_dismiss_time)
 
         else:
@@ -796,7 +833,10 @@ class MergeServersOperation(SA_NeighborhoodOperation):
 class AdjustServerPriceOperation(SA_NeighborhoodOperation):
     LATENCY_SENSITIVITY_KEYS = list(LATENCY_SENSITIVITY_MAP.keys())
     SERVER_TYPE_KEYS = list(SERVER_GENERATION_MAP.keys())
-    
+    def __init__(self, context: OperationContext):
+        super().__init__(context)
+        self.low_adjust_ratio = SAParameterGenerator(0.8, 0.98, self.context.sa_status.max_iter)
+        self.high_adjust_ratio = SAParameterGenerator(1.2, 1.02, self.context.sa_status.max_iter)
 
     def execute(self):
         # 随机生成区间长度
@@ -810,7 +850,10 @@ class AdjustServerPriceOperation(SA_NeighborhoodOperation):
         
         latency_sensitivity = random.choice(self.LATENCY_SENSITIVITY_KEYS)
         server_type = random.choice(self.SERVER_TYPE_KEYS)
-        ratio = random.uniform(0.5, 1.5)
+        adjust_low_ratio = self.low_adjust_ratio.get_parameter(self.context.sa_status.current_iter)
+        high_adjust_ratio = self.high_adjust_ratio.get_parameter(self.context.sa_status.current_iter)
+
+        ratio = random.uniform(adjust_low_ratio, high_adjust_ratio)
 
         try:
             self.context.solution.adjust_price_ratio(start_time, end_time, latency_sensitivity,
@@ -946,7 +989,7 @@ class SimulatedAnnealing:
         只有达到启用百分比要求的操作才会被选择。
         """
         # 获取当前迭代数与最大迭代数
-        current_step = self.status.iteration
+        current_step = self.status.current_iter
         max_steps = self.status.max_iter
         current_percentage = current_step / max_steps
         # 过滤掉那些尚未启用的操作
@@ -1006,9 +1049,9 @@ class SimulatedAnnealing:
     def run(self):
         """模拟退火的主循环。"""
         self.status.current_score = self.context.solution.diff_evaluation()  # 初始评价
-        self.status.iteration = 0  # 用于记录有效迭代次数
-        while self.status.iteration < self.status.max_iter:
-            self._print(f"<------ Iteration {self.status.iteration}/Max:{self.status.max_iter}/Max by temp:{self.status.max_iter_by_temp}, Temperature {self.status.current_temp:.2f} Bestscore {self.status.best_score:.5e} ------->", color=Fore.CYAN)
+        self.status.current_iter = 0  # 用于记录有效迭代次数
+        while self.status.current_iter < self.status.max_iter:
+            self._print(f"<------ Iteration {self.status.current_iter}/Max:{self.status.max_iter}/Max by temp:{self.status.max_iter_by_temp}, Temperature {self.status.current_temp:.2f} Bestscore {self.status.best_score:.5e} ------->", color=Fore.CYAN)
             self.print_operation_record()
             new_score, success, _ = self.generate_neighbor()  # 生成一个邻域解
             if success:
@@ -1022,7 +1065,7 @@ class SimulatedAnnealing:
                     # if math.fabs(score_compaire - self.status.current_score) > 1e-6:
                     #     raise("score_compaire != self.status.current_score")
                 # 只有当找到有效邻域解时，才增加迭代次数
-                self.status.iteration += 1
+                self.status.current_iter += 1
                 self.status.current_temp *= self.status.alpha  # 降低温度
                 if self.status.current_temp < self.status.min_temp:
                     break

@@ -1,5 +1,5 @@
 class SAParameterGenerator:
-    def __init__(self, start_value, end_value, total_steps, rule='linear'):
+    def __init__(self, start_value, end_value, total_steps, rule='exponential'):
         """
         初始化参数生成器
         :param start_value: 参数的起始值
