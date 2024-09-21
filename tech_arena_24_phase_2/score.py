@@ -2,6 +2,7 @@ import os
 import time
 from utils import load_problem_data, load_solution
 from evaluation import evaluation_function
+import multiprocessing as mp
 
 # Function to load all solutions in a directory using load_solution
 def load_all_solutions(directory):
@@ -19,20 +20,32 @@ def load_all_solutions(directory):
             solutions[seed] = (solution, price)
     return solutions
 
-# Function to evaluate each solution and return the score
-def evaluate_solutions(solutions, demand, datacenters, servers, selling_prices, p):
-    scores = []
-    for seed, (solution, price) in solutions.items():
-        print(f"Evaluating solution for seed: {seed}")
-        start_time = time.time()
-        # Evaluate the solution
-        score = evaluation_function(solution, price, demand, datacenters, servers, selling_prices,p, seed=seed, verbose=1)
+# 这是你原本的评估函数
+def evaluate_solution_wrapper(args):
+    seed, (solution, price), demand, datacenters, servers, selling_prices, p = args
+    print(f"Evaluating solution for seed: {seed}")
+    start_time = time.time()
+    
+    # 调用评估函数
+    score = evaluation_function(solution, price, demand, datacenters, servers, selling_prices, p, seed=seed, verbose=1)
+    
+    end_time = time.time()
+    elapsed_time = end_time - start_time
+    print(f'Solution score: {score} for seed {seed}')
+    print(f'Elapsed time: {elapsed_time} seconds')
+    
+    return score
 
-        end_time = time.time()
-        elapsed_time = end_time - start_time
-        print(f'Solution score: {score} for seed {seed}')
-        print(f'Elapsed time: {elapsed_time} seconds')
-        scores.append(score)
+# 多进程版本的evaluate_solutions
+def evaluate_solutions(solutions, demand, datacenters, servers, selling_prices, p, num_processes=None):
+    # 创建进程池，num_processes为None时默认使用机器的核心数
+    with mp.Pool(processes=num_processes) as pool:
+        # 构建参数列表，将每个解包装成元组，传递给进程池
+        args = [(seed, (solution, price), demand, datacenters, servers, selling_prices, p) for seed, (solution, price) in solutions.items()]
+        
+        # 使用map方法进行多进程运算
+        scores = pool.map(evaluate_solution_wrapper, args)
+
     return scores
 
 # Function to calculate the average score
@@ -58,5 +71,5 @@ def score_main(directory):
 
 # Specify the directory where JSON files are located
 if __name__ == "__main__":
-    directory = './2024-09-17-23-59-37'  # Update this path to your JSON directory
+    directory = './2024-09-21-15-24-54'  # Update this path to your JSON directory
     score_main(directory)
