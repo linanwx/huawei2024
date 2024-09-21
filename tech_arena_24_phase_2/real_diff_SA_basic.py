@@ -1,11 +1,71 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
+import threading
 from typing import Dict, Tuple
 from colorama import Style
 import numpy as np
 import pandas as pd
+import requests
 from idgen import ThreadSafeIDGenerator
 from real_diff_evaluation import DiffSolution, ServerInfo
+
+class MonitoringClient:
+    def __init__(self, server_url):
+        """
+        初始化监控客户端
+        :param server_url: Dash 应用程序的 HTTP 服务器 URL
+        """
+        self.server_url = server_url
+
+    def send_numerical_data(self, key, value):
+        """
+        发送数值类型的数据到监控服务器
+        :param key: 数据的标识符
+        :param value: 数值类型的数据
+        """
+        data = {
+            'key': key,
+            'type': 'numerical',
+            'value': value
+        }
+        self._send_data(data)
+
+    def send_status_data(self, key, status):
+        """
+        发送状态类型的数据到监控服务器
+        :param key: 数据的标识符
+        :param status: 'success' 或 'failure'
+        """
+        if status not in ['success', 'failure']:
+            raise ValueError('status must be either "success" or "failure"')
+        
+        data = {
+            'key': key,
+            'type': 'status',
+            'status': status
+        }
+        self._send_data(data)
+
+    def _send_data(self, data):
+        """
+        内部函数，向监控服务器发送数据
+        :param data: 要发送的数据字典
+        """
+        # 使用线程执行发送操作
+        threading.Thread(target=self._send_data_in_background, args=(data,)).start()
+
+    def _send_data_in_background(self, data):
+        """
+        后台执行数据发送的函数
+        :param data: 要发送的数据字典
+        """
+        try:
+            response = requests.post(f'{self.server_url}/data', json=data)
+            if response.status_code != 200:
+                print(f"Error sending data: {response.text}")
+        except requests.exceptions.ConnectionError:
+            print("Failed to connect to the monitoring server")
+
 
 class SlotAvailabilityManager:
     def __init__(self, datacenters, time_steps, verbose=False):
@@ -136,6 +196,30 @@ class SlotAvailabilityManager:
                 else:
                     break
         return ret
+    
+    def calculate_slot_utilization(self):
+        total_slots = 0
+        used_slots = 0
+        utilization_per_datacenter = {}
+
+        for dc, slots in self.datacenter_slots.items():
+            # 计算每个数据中心的插槽总数和已使用插槽数
+            dc_total_slots = self.total_slots[dc] * self.time_steps
+            dc_used_slots = np.sum(self.total_slots[dc] - slots)
+
+            # 计算每个数据中心的利用率
+            dc_utilization = dc_used_slots / dc_total_slots if dc_total_slots > 0 else 0
+            utilization_per_datacenter[dc] = dc_utilization
+
+            # 统计所有数据中心的总插槽和已使用插槽
+            total_slots += dc_total_slots
+            used_slots += dc_used_slots
+
+        # 计算整体的插槽利用率
+        total_utilization = used_slots / total_slots if total_slots > 0 else 0
+
+        # 返回整体利用率和各个数据中心的利用率
+        return total_utilization, utilization_per_datacenter
 
 @dataclass
 class SA_status:
@@ -149,6 +233,7 @@ class SA_status:
     best_score: float = 0.0
     verbose: bool = False
     seed: int = 0
+    monitor: MonitoringClient = None
     best_price_matrix: pd.DataFrame = None
 
 @dataclass
