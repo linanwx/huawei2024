@@ -27,7 +27,7 @@ if __name__ == '__main__':
     with Pool(processes=8) as pool:  # 4 代表创建4个并行进程，或者你可以根据CPU核数设置
         # map函数会将seeds列表中的每个种子分配到不同进程并行执行
         results = pool.imap_unordered(run_solution, extended_seeds)
-        for result in pool.imap_unordered(run_solution, extended_seeds):
+        for result in results:
             # 处理每个任务结果（此处可以输出日志或者其他处理）
             print("任务完成，保存结果")
 
