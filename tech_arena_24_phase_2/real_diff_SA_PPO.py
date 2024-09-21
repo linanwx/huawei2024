@@ -21,10 +21,16 @@ from real_diff_SA_basic import NeighborhoodOperation, SA_status, SlotAvailabilit
 
 TIME_STEPS = 168
 DEBUG = True
-INITIAL_TEMPERATURE = 200000.0
-MIN_TEMPERATURE = 100.0
-ALPHA = 0.99999
-MAX_ITER = 200000
+
+# INITIAL_TEMPERATURE = 897000000.0
+# MIN_TEMPERATURE = 0.000001
+# ALPHA = 0.9999656
+# MAX_ITER = 1000000
+
+INITIAL_TEMPERATURE = 4480000.0
+MIN_TEMPERATURE = 44.8
+ALPHA = 0.9999885
+MAX_ITER = 1000000
 
 # Automatically create output directory
 output_dir = './output/'
