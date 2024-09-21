@@ -31,6 +31,7 @@ INITIAL_TEMPERATURE = 4480000.0
 MIN_TEMPERATURE = 44.8
 ALPHA = 0.9999885
 MAX_ITER = 1000000
+GLOBAL_MAX_PURCHASE_RATIO = 0.12
 
 # Automatically create output directory
 output_dir = './output/'
@@ -52,7 +53,7 @@ class SA_NeighborhoodOperation(NeighborhoodOperation):
         pass
 
 class BuyServerOperation(SA_NeighborhoodOperation):
-    MAX_PURCHASE_RATIO = 0.12
+    MAX_PURCHASE_RATIO = GLOBAL_MAX_PURCHASE_RATIO
     def execute(self):
         time_step = random.randint(0, TIME_STEPS - 1)  # 随机选择一个时间步
         data_center = random.choice(list(self.context.slot_manager.total_slots.keys()))
@@ -188,7 +189,7 @@ class MoveServerOperation(SA_NeighborhoodOperation):
         return True
 
 class AdjustQuantityOperation(SA_NeighborhoodOperation):
-    MAX_QUANTITY_CHANGE = 0.12
+    MAX_QUANTITY_CHANGE = GLOBAL_MAX_PURCHASE_RATIO
     def execute(self):
         if not self.context.solution.server_map:
             self._print("No servers to adjust quantity")
@@ -795,6 +796,7 @@ class MergeServersOperation(SA_NeighborhoodOperation):
 class AdjustServerPriceOperation(SA_NeighborhoodOperation):
     LATENCY_SENSITIVITY_KEYS = list(LATENCY_SENSITIVITY_MAP.keys())
     SERVER_TYPE_KEYS = list(SERVER_GENERATION_MAP.keys())
+    
 
     def execute(self):
         # 随机生成区间长度
