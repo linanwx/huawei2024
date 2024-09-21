@@ -144,6 +144,8 @@ class SA_status:
     min_temp:float = 0.0
     alpha: float = 0.0
     max_iter: int = 0
+    max_iter_by_temp: int = 0
+    iteration: int = 0
     best_score: float = 0.0
     verbose: bool = False
     seed: int = 0

@@ -20,7 +20,11 @@ from idgen import ThreadSafeIDGenerator
 from real_diff_SA_basic import NeighborhoodOperation, SA_status, SlotAvailabilityManager, OperationContext
 
 TIME_STEPS = 168
-DEBUG = False
+DEBUG = True
+INITIAL_TEMPERATURE = 200000.0
+MIN_TEMPERATURE = 100.0
+ALPHA = 0.99999
+MAX_ITER = 200000
 
 # Automatically create output directory
 output_dir = './output/'
@@ -803,18 +807,29 @@ class AdjustServerPriceOperation(SA_NeighborhoodOperation):
         try:
             self.context.solution.adjust_price_ratio(start_time, end_time, latency_sensitivity,
                                                     server_type, ratio)
+            self._print(f"Adjusted price ratio for server type {server_type} with latency sensitivity {latency_sensitivity} from {start_time} to {end_time} to {ratio}")
             return True
         except:
             return False
 
+def calculate_steps(T0, T_final, alpha):
+    if T0 <= T_final:
+        raise ValueError("初始温度必须大于最终温度")
+    if not (0 < alpha < 1):
+        raise ValueError("降温系数 alpha 必须在 0 到 1 之间")
+
+    steps = math.log(T_final / T0) / math.log(alpha)
+    return math.ceil(steps)
 
 class SimulatedAnnealing:
     def __init__(self, slot_manager, servers_df, id_gen, solution: DiffSolution, seed, initial_temp, min_temp, alpha, max_iter, verbose=False):
+        # 基于温度 重算最大步骤数
         self.status = SA_status()
+        self.status.max_iter_by_temp = calculate_steps(initial_temp, min_temp, alpha)
+        self.status.max_iter = min(max_iter, self.status.max_iter_by_temp)
         self.status.current_temp = initial_temp
         self.status.min_temp = min_temp
         self.status.alpha = alpha
-        self.status.max_iter = max_iter
         self.status.verbose = verbose
         self.status.seed = seed
         self.id_gen = id_gen
@@ -845,6 +860,7 @@ class SimulatedAnnealing:
         # 初始化操作
         self.operations : list[NeighborhoodOperation] = []
         self.operation_probabilities = []
+        self.operation_enable_percentage = []
         self.total_weight = 0.0
 
         # 注册操作
@@ -874,7 +890,8 @@ class SimulatedAnnealing:
         )
         self.register_operation(
             AdjustServerPriceOperation(context=self.context),
-            weight=0.6
+            weight=0.6,
+            enable_percentage=0.4
         )
         # self.register_operation(
         #     PPO_BuyServerOperation(context=self.context, env=self.env, model=self.model),
@@ -908,14 +925,37 @@ class SimulatedAnnealing:
             else:
                 print(*args, **kwargs)
 
-    def register_operation(self, operation, weight=1.0):
+    def register_operation(self, operation, weight=1.0, enable_percentage=0.0):
         self.operations.append(operation)
         self.operation_probabilities.append(weight)
         self.total_weight += weight
+        # 将启用百分比与操作一起存储
+        self.operation_enable_percentage.append(enable_percentage)
 
     def choose_operation(self):
-        probabilities = [w / self.total_weight for w in self.operation_probabilities]
-        return random.choices(self.operations, weights=probabilities, k=1)[0]
+        """
+        在选择操作之前检查其启用条件。
+        只有达到启用百分比要求的操作才会被选择。
+        """
+        # 获取当前迭代数与最大迭代数
+        current_step = self.status.iteration
+        max_steps = self.status.max_iter
+        current_percentage = current_step / max_steps
+        # 过滤掉那些尚未启用的操作
+        available_operations = [
+            (op, weight) for op, weight, enable_percent in zip(self.operations, self.operation_probabilities, self.operation_enable_percentage)
+            if current_percentage >= enable_percent
+        ]
+        if not available_operations:
+            raise ValueError("No operations are available at this stage.")
+        # 解包操作与权重列表
+        operations, weights = zip(*available_operations)
+        # 计算权重总和
+        total_weight = sum(weights)
+        # 计算权重比例
+        probabilities = [w / total_weight for w in weights]
+        # 随机选择一个操作
+        return random.choices(operations, weights=probabilities, k=1)[0]
 
     def generate_neighbor(self):
         self.slot_manager.clear_pending_updates()
@@ -958,9 +998,9 @@ class SimulatedAnnealing:
     def run(self):
         """模拟退火的主循环。"""
         self.status.current_score = self.context.solution.diff_evaluation()  # 初始评价
-        iteration = 0  # 用于记录有效迭代次数
-        while iteration < self.status.max_iter:
-            self._print(f"<------ Iteration {iteration}, Temperature {self.status.current_temp:.2f} Bestscore {self.status.best_score:.5e} ------->", color=Fore.CYAN)
+        self.status.iteration = 0  # 用于记录有效迭代次数
+        while self.status.iteration < self.status.max_iter:
+            self._print(f"<------ Iteration {self.status.iteration}/Max:{self.status.max_iter}/Max by temp:{self.status.max_iter_by_temp}, Temperature {self.status.current_temp:.2f} Bestscore {self.status.best_score:.5e} ------->", color=Fore.CYAN)
             self.print_operation_record()
             new_score, success, _ = self.generate_neighbor()  # 生成一个邻域解
             if success:
@@ -974,7 +1014,7 @@ class SimulatedAnnealing:
                     # if math.fabs(score_compaire - self.status.current_score) > 1e-6:
                     #     raise("score_compaire != self.status.current_score")
                 # 只有当找到有效邻域解时，才增加迭代次数
-                iteration += 1
+                self.status.iteration += 1
                 self.status.current_temp *= self.status.alpha  # 降低温度
                 if self.status.current_temp < self.status.min_temp:
                     break
@@ -998,10 +1038,10 @@ def get_my_solution(seed, verbose=False):
         id_gen=id_gen,
         solution=solution,
         seed=seed,
-        initial_temp=200000,
-        min_temp=100,
-        alpha=0.99999,
-        max_iter=200000,
+        initial_temp=INITIAL_TEMPERATURE,
+        min_temp=MIN_TEMPERATURE,
+        alpha=ALPHA,
+        max_iter=MAX_ITER,
         verbose=verbose
     )
     best_solution_server_map, best_score, best_price_matrix = sa.run()
