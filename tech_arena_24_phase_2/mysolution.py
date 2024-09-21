@@ -24,7 +24,7 @@ def run_solution(seed):
 
 if __name__ == '__main__':
     # 创建进程池（根据你的系统核心数调整 processes 的数量，比如 4 或 8）
-    with Pool(processes=8) as pool:  # 4 代表创建4个并行进程，或者你可以根据CPU核数设置
+    with Pool(processes=10) as pool:  # 4 代表创建4个并行进程，或者你可以根据CPU核数设置
         # map函数会将seeds列表中的每个种子分配到不同进程并行执行
         results = pool.imap_unordered(run_solution, extended_seeds)
         for result in results:
