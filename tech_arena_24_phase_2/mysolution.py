@@ -7,7 +7,7 @@ from multiprocessing import Pool
 # 获取训练的 seeds
 seeds = known_seeds()
 
-extended_seeds = seeds * 4  # 将 seeds 列表重复
+extended_seeds = seeds * 2  # 将 seeds 列表重复
 
 # 读取需求数据
 demand = pd.read_csv('./data/demand.csv')

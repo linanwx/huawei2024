@@ -20,7 +20,7 @@ from idgen import ThreadSafeIDGenerator
 from real_diff_SA_basic import NeighborhoodOperation, SA_status, SlotAvailabilityManager, OperationContext
 
 TIME_STEPS = 168
-DEBUG = True
+DEBUG = False
 
 # INITIAL_TEMPERATURE = 897000000.0
 # MIN_TEMPERATURE = 0.000001
