@@ -590,12 +590,12 @@ class DiffSolution:
 
         # 计算利用率
         # 注意要避免除以零的情况
-        with np.errstate(divide='ignore', invalid='ignore'):
-            utilization_values = np.where(
-                capacity_values > 1e-6,
-                satisfaction_values / capacity_values,
-                0.0
-            )
+        # with np.errstate(divide='ignore', invalid='ignore'):
+        #     utilization_values = np.where(
+        #         capacity_values > 1e-6,
+        #         satisfaction_values / capacity_values,
+        #         0.0
+        #     )
         # 更新 blackboard 的 utilization_matrix
         # blackboard.utilization_matrix[time_steps, latency_idxs, server_generation_idxs] = utilization_values
 
