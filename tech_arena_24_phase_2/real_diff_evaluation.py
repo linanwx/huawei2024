@@ -5,6 +5,7 @@ import pandas as pd
 from dataclasses import dataclass, field
 from typing import Dict, List
 from evaluation import get_actual_demand
+from idgen import ThreadSafeIDGenerator
 
 TIME_STEPS = 168  # 时间下标从0到167
 FAILURE_RATE = 0.0726  # 故障率
@@ -84,6 +85,7 @@ class ServerInfo:
     life_expectancy: int = None          # 最大寿命
     cost_of_moving: float = None         # 迁移成本
     average_maintenance_fee: float = None  # 平均维护费用
+    hash: int = None                     # 服务器信息的哈希值
 
     def __post_init__(self):
         # 填充服务器信息
@@ -183,6 +185,7 @@ class DiffSolution:
 
         self.cost_details = {t: {'purchase_cost': 0, 'energy_cost': 0, 'maintenance_cost': 0} for t in range(TIME_STEPS)}
         self.capacity_combinations = {t: {} for t in range(TIME_STEPS)} # 日志用
+        self.idgen = ThreadSafeIDGenerator()
 
     def get_server_copy(self, server_id:str):
         server_info = self.server_map.get(server_id)
@@ -353,6 +356,7 @@ class DiffSolution:
     def apply_server_change(self, diff_info: ServerInfo):
         # print(f'apply_server_change: {diff_info}')
         # diff_info.init_buy_and_move_info()
+        diff_info.hash = self.idgen.next_id()
         if diff_info.dismiss_time > diff_info.buy_and_move_info[0].time_step + diff_info.life_expectancy:
             raise ValueError("Dismiss time cannot exceed maximum lifespan.")
         self._init_blackboard()
@@ -881,7 +885,7 @@ def update_best_solution(old_best: Dict[str, 'ServerInfo'], current: Dict[str, '
             old_best[key] = copy.deepcopy(current_value)
         else:
             old_value = old_best[key]
-            if old_value != current_value:
+            if old_value.hash != current_value.hash:
                 # 4. 如果值不同，更新旧解中的值
                 old_best[key] = copy.deepcopy(current_value)
             # 如果值相同，则无需操作，保留旧解中的值
