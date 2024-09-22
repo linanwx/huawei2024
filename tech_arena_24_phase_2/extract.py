@@ -47,4 +47,4 @@ for seed, (file_name, _) in max_files.items():
 
 print(f"最大分数文件已复制到 {output_dir}，文件名只保留 seed。")
 
-score_main(output_dir)
+# score_main(output_dir)
