@@ -6,7 +6,7 @@ from evaluation import evaluation_function
 
 
 # LOAD SOLUTION
-fleet, pricing_strategy = load_solution('./output/2381_2.08774e+09.json')
+fleet, pricing_strategy = load_solution('./output/2381_2.10091e+09.json')
 
 # LOAD PROBLEM DATA
 demand, datacenters, servers, selling_prices, elasticity = load_problem_data()

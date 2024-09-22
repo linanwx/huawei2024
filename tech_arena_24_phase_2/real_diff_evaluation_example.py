@@ -143,7 +143,7 @@ def load_and_process_operations(file_path):
 
 
 # 示例调用
-json_file_path = './output/2381_2.08774e+09.json'
+json_file_path = './output/2381_2.10091e+09.json'
 server_map, pricing_steps = load_and_process_operations(json_file_path)
 
 

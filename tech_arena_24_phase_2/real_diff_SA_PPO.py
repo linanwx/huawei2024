@@ -17,33 +17,31 @@ from idgen import ThreadSafeIDGenerator
 
 # from ppo_sa_env import PPO_SA_Env
 
-from real_diff_SA_basic import NeighborhoodOperation, SA_status, SlotAvailabilityManager, OperationContext
+from real_diff_SA_basic import MonitoringClient, NeighborhoodOperation, SA_status, SlotAvailabilityManager, OperationContext
 from parameter_generator import SAParameterGenerator
 
 TIME_STEPS = 168
 DEBUG = False
+MONITOR = False
 
-# INITIAL_TEMPERATURE = 897000000.0
-# MIN_TEMPERATURE = 0.000001
-# ALPHA = 0.9999656
-# MAX_ITER = 1000000
+GLOBAL_MAX_ADJUSTSERVERPRICE = 10
 
 INITIAL_TEMPERATURE = 4480000.0
 MIN_TEMPERATURE = 44.8
 
 # for 10 min
-# ALPHA = 0.9999885
-# MAX_ITER = 1000000
+ALPHA = 0.9999885
+MAX_ITER = 1000000
 
 # for 1 min
 # ALPHA = 0.9998849
 # MAX_ITER = 100000
 
 # for 30 min
-ALPHA = 0.9999962
-MAX_ITER = 3000000
+# ALPHA = 0.9999962
+# MAX_ITER = 3000000
 
-GLOBAL_MAX_PURCHASE_RATIO = 0.1
+GLOBAL_MAX_PURCHASE_RATIO = 0.001
 
 # Automatically create output directory
 output_dir = './output/'
@@ -65,7 +63,6 @@ class SA_NeighborhoodOperation(NeighborhoodOperation):
         pass
 
 class BuyServerOperation(SA_NeighborhoodOperation):
-    MAX_PURCHASE_RATIO = GLOBAL_MAX_PURCHASE_RATIO
     def execute(self):
         time_step = random.randint(0, TIME_STEPS - 1)  # 随机选择一个时间步
         data_center = random.choice(list(self.context.slot_manager.total_slots.keys()))
@@ -98,7 +95,7 @@ class BuyServerOperation(SA_NeighborhoodOperation):
             return False
 
         # 计算最大购买数量，基于 MAX_PURCHASE_RATIO
-        max_quantity_based_on_ratio = int((max_available_slots // slots_size) * self.MAX_PURCHASE_RATIO)
+        max_quantity_based_on_ratio = int((max_available_slots // slots_size) * self.context.sa_status.global_buy_rate)
         if max_available_slots // slots_size >= 1 and max_quantity_based_on_ratio == 0:
             max_quantity_based_on_ratio = 1 # 确保至少购买1个
 
@@ -201,7 +198,6 @@ class MoveServerOperation(SA_NeighborhoodOperation):
         return True
 
 class AdjustQuantityOperation(SA_NeighborhoodOperation):
-    MAX_QUANTITY_CHANGE = GLOBAL_MAX_PURCHASE_RATIO
     def __init__(self, context: OperationContext):
         super().__init__(context)
         self.decrease_max_parameters = SAParameterGenerator(0.15, 0.05, self.context.sa_status.max_iter)
@@ -268,7 +264,7 @@ class AdjustQuantityOperation(SA_NeighborhoodOperation):
                 # 获取在该时间段和数据中心的最大可用插槽
                 available_slots = self.context.slot_manager.get_maximum_available_slots(start_time, end_time, data_center)
                 # 计算该时间段可增加的最大数量
-                max_quantity = int(available_slots // slots_size * self.MAX_QUANTITY_CHANGE)
+                max_quantity = int(available_slots // slots_size * self.context.sa_status.global_buy_rate)
                 if available_slots // slots_size >= 1 and max_quantity == 0:
                     max_quantity = 1 # 确保至少增加1个
                 max_quantity_list.append(max_quantity)
@@ -693,39 +689,43 @@ class MergeServersOperation(SA_NeighborhoodOperation):
             gen = server.server_generation
             servers_by_generation.setdefault(gen, []).append(server)
 
-        # Collect potential pairs for merging
-        potential_pairs = []
-        for servers in servers_by_generation.values():
-            if len(servers) < 2:
+        # Randomly select one server (s1)
+        s1 = random.choice(list(server_map.values()))
+        s1_gen = s1.server_generation
+
+        # Check if there are other servers of the same generation
+        if s1_gen not in servers_by_generation or len(servers_by_generation[s1_gen]) < 2:
+            self._print(f"Not enough servers of generation {s1_gen} to merge with Server {s1.server_id}")
+            return False
+
+        # Collect other servers of the same generation
+        candidates = [s2 for s2 in servers_by_generation[s1_gen] if s2.server_id != s1.server_id]
+
+        if not candidates:
+            self._print(f"No suitable candidates to merge with Server {s1.server_id}")
+            return False
+
+        # Randomly check candidates to see if they can be merged with s1
+        for s2 in random.sample(candidates, len(candidates)):
+            if s1.dismiss_time >= s2.buy_and_move_info[0].time_step:
                 continue
-            # Consider all pairs of servers of the same type
-            for i in range(len(servers)):
-                for j in range(i+1, len(servers)):
-                    s1, s2 = servers[i], servers[j]
-                    if s1.dismiss_time >= s2.buy_and_move_info[0].time_step:
-                        continue
-                    # Check if s1's max dismiss time is after s2's dismiss time
-                    max_dismiss_time_s1 = min(s1.buy_and_move_info[0].time_step + s1.life_expectancy, TIME_STEPS)
-                    if max_dismiss_time_s1 < s2.dismiss_time:
-                        continue
-                    potential_pairs.append((s1, s2))
+            max_dismiss_time_s1 = min(s1.buy_and_move_info[0].time_step + s1.life_expectancy, TIME_STEPS)
+            if max_dismiss_time_s1 < s2.dismiss_time:
+                continue
+            
+            # If a valid candidate is found, attempt to merge
+            self._print(f"Attempting to merge Server {s1.server_id} and Server {s2.server_id}")
+            self._print(f"Server 1: {s1}")
+            self._print(f"Server 2: {s2}")
+            try:
+                return self.merge_servers(s1, s2)
+            except Exception as e:
+                self._print(f"Error during merge: {e}", color=Fore.RED)
+                return False
 
-        if not potential_pairs:
-            self._print("No suitable server pairs found for merging")
-            return False
-
-        # Randomly select a pair to attempt merging
-        s1, s2 = random.choice(potential_pairs)
-        self._print(f"Attempting to merge Server {s1.server_id} and Server {s2.server_id}")
-        self._print(f"Server 1: {s1}")
-        self._print(f"Server 2: {s2}")
-
-        # Begin merging process
-        try:
-            return self.merge_servers(s1, s2)
-        except Exception as e:
-            self._print(f"Error during merge: {e}", color=Fore.RED)
-            return False
+        # If no valid server pair is found
+        self._print(f"No suitable server found to merge with Server {s1.server_id}")
+        return False
 
     def merge_servers(self, s1: ServerInfo, s2: ServerInfo):
         # Suppose the first server's dismiss time is t1, the second server's purchase time is t2
@@ -835,12 +835,12 @@ class AdjustServerPriceOperation(SA_NeighborhoodOperation):
     SERVER_TYPE_KEYS = list(SERVER_GENERATION_MAP.keys())
     def __init__(self, context: OperationContext):
         super().__init__(context)
-        self.low_adjust_ratio = SAParameterGenerator(0.8, 0.98, self.context.sa_status.max_iter)
-        self.high_adjust_ratio = SAParameterGenerator(1.2, 1.02, self.context.sa_status.max_iter)
+        self.low_adjust_ratio = SAParameterGenerator(0.80, 0.99, self.context.sa_status.max_iter)
+        self.high_adjust_ratio = SAParameterGenerator(1.20, 1.01, self.context.sa_status.max_iter)
 
     def execute(self):
         # 随机生成区间长度
-        duration = random.randint(1, TIME_STEPS - 1)
+        duration = random.randint(1, GLOBAL_MAX_ADJUSTSERVERPRICE)
         
         # 再随机生成起始时间，保证剩下的时间足够
         start_time = random.randint(0, TIME_STEPS - duration)
@@ -873,7 +873,7 @@ def calculate_steps(T0, T_final, alpha):
     return math.ceil(steps)
 
 class SimulatedAnnealing:
-    def __init__(self, slot_manager, servers_df, id_gen, solution: DiffSolution, seed, initial_temp, min_temp, alpha, max_iter, verbose=False):
+    def __init__(self, slot_manager, servers_df, id_gen, solution: DiffSolution, seed, initial_temp, min_temp, alpha, max_iter, global_buy_rate, global_adjust_price_range, verbose=False):
         # 基于温度 重算最大步骤数
         self.status = SA_status()
         self.status.max_iter_by_temp = calculate_steps(initial_temp, min_temp, alpha)
@@ -883,7 +883,11 @@ class SimulatedAnnealing:
         self.status.alpha = alpha
         self.status.verbose = verbose
         self.status.seed = seed
+        self.status.global_buy_rate = global_buy_rate
+        self.status.global_adjust_price_range = global_adjust_price_range
         self.id_gen = id_gen
+        if MONITOR:
+            self.status.monitor = MonitoringClient(server_url='http://127.0.0.1:8050')
 
         self.slot_manager: SlotAvailabilityManager = slot_manager
 
@@ -925,24 +929,24 @@ class SimulatedAnnealing:
         )
         self.register_operation(
             AdjustQuantityOperation(context=self.context),
-            weight=0.2
+            weight=0.4
         )
         self.register_operation(
             AdjustTimeOperation(context=self.context),
-            weight=0.8
+            weight=0.4
         )
         self.register_operation(
             RemoveServerOperation(context=self.context),
-            weight=0.2
+            weight=0.4
         )
         self.register_operation(
             MergeServersOperation(context=self.context),
-            weight=0.3  # Adjust the weight as desired
+            weight=0.2
         )
         self.register_operation(
             AdjustServerPriceOperation(context=self.context),
-            weight=0.6,
-            enable_percentage=0.4
+            weight=0.4,
+            enable_percentage=0.25
         )
         # self.register_operation(
         #     PPO_BuyServerOperation(context=self.context, env=self.env, model=self.model),
@@ -1018,8 +1022,12 @@ class SimulatedAnnealing:
 
     def acceptance_probability(self, old_score, new_score):
         if new_score > old_score:
+            if MONITOR:
+                self.status.monitor.send_numerical_data("diff score +", new_score - old_score)
             return 1.0
         else:
+            if MONITOR:
+                self.status.monitor.send_numerical_data("diff score -", new_score - old_score)
             return np.exp((new_score - old_score) / self.status.current_temp)
 
     def accept_solution(self, accept_prob, new_score):
@@ -1029,6 +1037,9 @@ class SimulatedAnnealing:
             self.context.solution.commit_server_changes()
             # 检查解是否合法
             self.slot_manager.apply_pending_updates()
+            if MONITOR:
+                total_utilization, _ = self.slot_manager.calculate_slot_utilization()
+                self.status.monitor.send_numerical_data("total_utilization", total_utilization)
             if DEBUG:
                 result = self.slot_manager.can_accommodate_servers(self.context.solution.server_map)
                 if not result:
@@ -1054,16 +1065,27 @@ class SimulatedAnnealing:
             self._print(f"<------ Iteration {self.status.current_iter}/Max:{self.status.max_iter}/Max by temp:{self.status.max_iter_by_temp}, Temperature {self.status.current_temp:.2f} Bestscore {self.status.best_score:.5e} ------->", color=Fore.CYAN)
             self.print_operation_record()
             new_score, success, _ = self.generate_neighbor()  # 生成一个邻域解
+            if MONITOR:
+                self.status.monitor.send_status_data("generate neighbor success", "success" if success else "failure")
             if success:
+                if MONITOR:
+                    self.status.monitor.send_numerical_data("score", new_score)
                 accept_prob = self.acceptance_probability(self.status.current_score, new_score)
                 # print(f"Iteration: {iteration}. New best solution for {self.status.seed} with score {self.status.best_score:.5e}")
                 if self.accept_solution(accept_prob, new_score):
                     self.status.current_score = new_score  # 如果接受，更新当前分数
+                    if MONITOR:
+                        self.status.monitor.send_status_data("accept solution", "success")
+                    # self.status.monitor.report("accept solution", value=None, success=True)
                     # score_compaire, another_S = evaluate_map(self.context.sa_status.seed, self.context.solution.server_map)
                     # self.context.solution.check_same(another_S)
                     # print(f'score: {self.status.current_score} score_compaire:{score_compaire}')
                     # if math.fabs(score_compaire - self.status.current_score) > 1e-6:
                     #     raise("score_compaire != self.status.current_score")
+                else:
+                    if MONITOR:
+                        self.status.monitor.send_status_data("accept solution", "failure")
+                    # self.status.monitor.report("accept solution", value=None, success=False)
                 # 只有当找到有效邻域解时，才增加迭代次数
                 self.status.current_iter += 1
                 self.status.current_temp *= self.status.alpha  # 降低温度
@@ -1074,7 +1096,7 @@ class SimulatedAnnealing:
 
         return self.best_solution_server_map, self.status.best_score, self.status.best_price_matrix
 
-def get_my_solution(seed, verbose=False):
+def get_my_solution(seed, initial_temp=INITIAL_TEMPERATURE, min_temp=MIN_TEMPERATURE, alpha=ALPHA, max_iter=MAX_ITER, global_buy_rate=GLOBAL_MAX_PURCHASE_RATIO, global_adjust_price_range=GLOBAL_MAX_ADJUSTSERVERPRICE, verbose=False):
     servers = pd.read_csv('./data/servers.csv')
     datacenters = pd.read_csv('./data/datacenters.csv')
     servers[['release_start', 'release_end']] = servers['release_time'].apply(
@@ -1089,10 +1111,12 @@ def get_my_solution(seed, verbose=False):
         id_gen=id_gen,
         solution=solution,
         seed=seed,
-        initial_temp=INITIAL_TEMPERATURE,
-        min_temp=MIN_TEMPERATURE,
-        alpha=ALPHA,
-        max_iter=MAX_ITER,
+        initial_temp=initial_temp,
+        min_temp=min_temp,
+        alpha=alpha,
+        max_iter=max_iter,
+        global_buy_rate=global_buy_rate,
+        global_adjust_price_range=global_adjust_price_range,
         verbose=verbose
     )
     best_solution_server_map, best_score, best_price_matrix = sa.run()

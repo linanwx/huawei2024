@@ -233,6 +233,8 @@ class SA_status:
     best_score: float = 0.0
     verbose: bool = False
     seed: int = 0
+    global_buy_rate: float = 0.0
+    global_adjust_price_range: float = 0.0
     monitor: MonitoringClient = None
     best_price_matrix: pd.DataFrame = None
 
