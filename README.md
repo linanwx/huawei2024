@@ -28,7 +28,7 @@ Our solution employs a **Simulated Annealing (SA)** algorithm to optimize server
 - `real_diff_SA_basic.py`: Implements the Simulated Annealing algorithm and neighborhood operations.
 - `data/`: Directory containing input data such as server specifications, datacenter details, and demand forecasts.
 - `output/`: Directory where the output JSON files with the optimized server deployment and pricing strategy are saved.
-- `requirements.txt`: List of Python dependencies required to run the code.
+- `environment.yml`: List of Python dependencies required to run the code.
 
 ## Getting Started
 
