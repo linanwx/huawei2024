@@ -18,7 +18,7 @@ def run_solution(seed):
     np.random.seed(seed)
 
     # 调用你的方法
-    solution = get_my_solution(seed, alpha=0.9999962, max_iter=3000000, global_buy_rate=0.001)
+    solution = get_my_solution(seed, alpha=0.9999962, max_iter=3000000, global_buy_rate=0.0005)
 
     return solution
 

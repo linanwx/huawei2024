@@ -21,8 +21,8 @@ from real_diff_SA_basic import MonitoringClient, NeighborhoodOperation, SA_statu
 from parameter_generator import SAParameterGenerator
 
 TIME_STEPS = 168
-DEBUG = False
-MONITOR = False
+DEBUG = True
+MONITOR = True
 
 GLOBAL_MAX_ADJUSTSERVERPRICE = 10
 
@@ -30,12 +30,12 @@ INITIAL_TEMPERATURE = 4480000.0
 MIN_TEMPERATURE = 44.8
 
 # for 10 min
-ALPHA = 0.9999885
-MAX_ITER = 1000000
+# ALPHA = 0.9999885
+# MAX_ITER = 1000000
 
 # for 1 min
-# ALPHA = 0.9998849
-# MAX_ITER = 100000
+ALPHA = 0.9998849
+MAX_ITER = 100000
 
 # for 30 min
 # ALPHA = 0.9999962

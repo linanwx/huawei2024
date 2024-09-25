@@ -38,7 +38,7 @@ class MyDashApp:
     def setup_layout(self):
         # 定义应用的布局
         self.app.layout = html.Div([
-            html.H1('仪表盘'),
+            html.H1('Dashboards'),
             dcc.Interval(
                 id='interval-component',
                 interval=1*1000,  # 毫秒
@@ -67,7 +67,7 @@ class MyDashApp:
                     fig = go.Figure()
                     fig.add_trace(go.Scatter(x=df['timestamp'], y=df['value'], mode='lines+markers', name=key))
                     graphs.append(html.Div([
-                        html.H3(f'{key} 的数值变化'),
+                        html.H3(f'Value change of {key}'),
                         dcc.Graph(figure=fig)
                     ]))
 
@@ -83,7 +83,7 @@ class MyDashApp:
                     fig = go.Figure()
                     fig.add_trace(go.Scatter(x=df_grouped['timestamp'], y=df_grouped['success'], mode='lines+markers', name=key))
                     graphs.append(html.Div([
-                        html.H3(f'{key} 的每秒成功率'),
+                        html.H3(f'Success rate per second of {key}'),
                         dcc.Graph(figure=fig)
                     ]))
 
