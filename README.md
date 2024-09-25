@@ -38,7 +38,7 @@ Our solution employs a **Simulated Annealing (SA)** algorithm to optimize server
 - Install the required packages:
 
 ```bash
-pip install -r requirements.txt
+conda env create -f environment.yml
 ```
 
 ### Data Files
@@ -56,7 +56,7 @@ Ensure the following data files are present in the `data/` directory:
 To execute the optimization algorithm, run:
 
 ```bash
-python main.py
+python real_diff_SA_PPO.py
 ```
 
 This will generate an output JSON file in the `output/` directory with the optimized server deployment and pricing strategy.
