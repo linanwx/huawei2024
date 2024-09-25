@@ -1,4 +1,124 @@
-# huawei2024
+# Server Cluster Management Optimization
+
+This repository contains our solution to Huawei Ireland Research Center's Tech Arena 2024 competition, specifically addressing the server cluster management model problem.
+
+## Problem Description
+
+### Problem 1: Server Cluster Management Model
+
+The objective is to recommend the types and quantities of servers to deploy at each time step to maximize profit. Participants manage two types of servers (CPU and GPU) across four data centers. Actions include purchasing, moving, maintaining, and dismissing servers, as well as setting prices. Decision-making factors involve server capacity, energy consumption, maintenance costs, etc. Adjusting prices affects demand.
+
+### Problem 2: Solution Presentation
+
+Participants are required to prepare a 7-minute presentation to showcase their solution to Problem 1, explaining why the algorithm is strong and reliable in a business context.
+
+## Solution Overview
+
+Our solution employs a **Simulated Annealing (SA)** algorithm to optimize server deployment and pricing strategies. The key components of the solution are:
+
+- **Server Deployment Optimization**: Deciding when and where to purchase, move, or dismiss servers based on capacity, costs, and demand.
+- **Pricing Strategy**: Adjusting server prices over time to influence demand and maximize profit.
+- **Simulated Annealing**: Utilizing SA to efficiently explore the solution space and escape local optima.
+
+## Repository Structure
+
+- `main.py`: The main script to run the optimization algorithm.
+- `real_diff_evaluation.py`: Contains the `DiffSolution` class and related data structures for differential evaluation.
+- `real_diff_SA_basic.py`: Implements the Simulated Annealing algorithm and neighborhood operations.
+- `data/`: Directory containing input data such as server specifications, datacenter details, and demand forecasts.
+- `output/`: Directory where the output JSON files with the optimized server deployment and pricing strategy are saved.
+- `requirements.txt`: List of Python dependencies required to run the code.
+
+## Getting Started
+
+### Prerequisites
+
+- Python 3.8 or higher
+- Install the required packages:
+
+```bash
+pip install -r requirements.txt
+```
+
+### Data Files
+
+Ensure the following data files are present in the `data/` directory:
+
+- `servers.csv`
+- `datacenters.csv`
+- `demand.csv`
+- `price_elasticity_of_demand.csv`
+- `selling_prices.csv`
+
+### Running the Code
+
+To execute the optimization algorithm, run:
+
+```bash
+python main.py
+```
+
+This will generate an output JSON file in the `output/` directory with the optimized server deployment and pricing strategy.
+
+### Parameters
+
+You can adjust the parameters of the Simulated Annealing algorithm by modifying the following variables in `main.py`:
+
+- `INITIAL_TEMPERATURE`: The starting temperature for SA.
+- `MIN_TEMPERATURE`: The minimum temperature to stop the algorithm.
+- `ALPHA`: The cooling rate.
+- `MAX_ITER`: The maximum number of iterations.
+- `GLOBAL_MAX_PURCHASE_RATIO`: The maximum ratio of servers that can be purchased at each step.
+
+### Output
+
+The output JSON file contains two main sections:
+
+- **Fleet**: The server actions (buy, move, dismiss) with time steps and datacenter locations.
+- **Pricing Strategy**: The adjusted prices for servers over time.
+
+## Algorithm Details
+
+### Simulated Annealing
+
+Our SA implementation includes several neighborhood operations to explore the solution space:
+
+- **BuyServerOperation**: Purchases new servers.
+- **MoveServerOperation**: Moves servers between datacenters.
+- **AdjustQuantityOperation**: Adjusts the quantity of servers.
+- **AdjustTimeOperation**: Adjusts the timing of server actions.
+- **RemoveServerOperation**: Removes servers from the fleet.
+- **MergeServersOperation**: Merges servers to optimize resources.
+- **AdjustServerPriceOperation**: Adjusts server prices to influence demand.
+
+The algorithm balances exploration and exploitation by probabilistically accepting worse solutions based on the temperature schedule.
+
+### Demand Modeling
+
+The demand is affected by the server prices through a price elasticity model. Adjusting prices allows us to influence demand and optimize profit.
+
+### Cost Components
+
+The total cost includes:
+
+- **Purchase Cost**: Cost of buying servers.
+- **Energy Cost**: Cost of energy consumption over time.
+- **Maintenance Cost**: Cost of maintaining servers, which increases over time.
+- **Moving Cost**: Cost of moving servers between datacenters.
+
+## Results
+
+Our algorithm successfully optimizes the server deployment and pricing strategy to maximize profit over the given time horizon. The Simulated Annealing approach allows us to efficiently explore the solution space and find high-quality solutions.
+
+## License
+
+[Specify the license under which the code is released, e.g., MIT License]
+
+## Acknowledgments
+
+- Huawei Ireland Research Center for organizing the Tech Arena 2024 competition.
+
+---
 
 ## 可行方案分析
 
