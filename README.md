@@ -1,6 +1,7 @@
 # Server Cluster Management Optimization
 
-This repository contains our solution to Huawei Ireland Research Center's Tech Arena 2024 competition, specifically addressing the server cluster management model problem.
+This repository contains our solution for the Huawei Ireland Research Center's Tech Arena 2024 competition, where we achieved first place in the algorithm section of the server cluster management model problem, significantly outperforming the second place. However, due to a lack of emphasis on the PPT and presentation, we finished third overall in the final competition.
+
 
 ## Problem Description
 
@@ -108,11 +109,8 @@ The total cost includes:
 
 ## Results
 
-Our algorithm successfully optimizes the server deployment and pricing strategy to maximize profit over the given time horizon. The Simulated Annealing approach allows us to efficiently explore the solution space and find high-quality solutions.
+Our algorithm achieved first place in the algorithm section of the competition, significantly outperforming the second place. However, due to insufficient focus on the PPT and presentation, we ultimately fell short in the finals and finished in third place.
 
-## License
-
-[Specify the license under which the code is released, e.g., MIT License]
 
 ## Acknowledgments
 
