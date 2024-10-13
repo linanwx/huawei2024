@@ -34,6 +34,7 @@ Our solution employs a **Simulated Annealing (SA)** algorithm to optimize server
 
 ### Prerequisites
 
+- The code’s feasibility has been verified only on MacBooks with Apple Silicon chips.
 - Python 3.8 or higher
 - Install the required packages:
 
